@@ -3,7 +3,7 @@
 <div align="center">
 
 ![Go 版本](https://img.shields.io/badge/Go-1.24+-00ADD8?style=for-the-badge&logo=go)
-![开源协议](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+![开源协议](https://img.shields.io/badge/License-Apache%202.0-green?style=for-the-badge)
 ![支持平台](https://img.shields.io/badge/Platform-Linux-lightgrey?style=for-the-badge)
 
 *一款精美的基于 TUI 的命令行工具，用于管理和切换 Claude Code、Codex 与 Droid 配置*
@@ -206,7 +206,7 @@ TUI 支持高级用户的键盘快捷键：
 
 ## 📄 开源协议
 
-本项目基于 MIT 协议开源 - 详情请参阅 [LICENSE](LICENSE) 文件。
+本项目基于 Apache 2.0 协议开源 - 详情请参阅 [LICENSE](LICENSE) 文件。
 
 ## 🙏 致谢
 
