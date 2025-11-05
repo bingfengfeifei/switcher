@@ -4,9 +4,9 @@
 
 ![Go 版本](https://img.shields.io/badge/Go-1.24+-00ADD8?style=for-the-badge&logo=go)
 ![开源协议](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
-![支持平台](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey?style=for-the-badge)
+![支持平台](https://img.shields.io/badge/Platform-Linux-lightgrey?style=for-the-badge)
 
-*一款精美的基于 TUI 的命令行工具，用于管理和切换 Claude Code 与 Codex 配置*
+*一款精美的基于 TUI 的命令行工具，用于管理和切换 Claude Code、Codex 与 Droid 配置*
 
 [![演示](https://img.shields.io/badge/演示-🎬-ff69b4?style=for-the-badge)](#-演示)
 [![安装](https://img.shields.io/badge/安装-📦-4285f4?style=for-the-badge)](#-安装)
@@ -20,7 +20,7 @@
 - ⚡ **快速切换** - 即时切换不同的 API 配置
 - 🔒 **安全管理** - API 密钥在显示时会被遮蔽，确保安全
 - 📝 **配置 CRUD** - 轻松添加、编辑、删除和管理配置
-- 🎯 **双服务支持** - 同时管理 Claude Code 和 Codex 配置
+- 🎯 **三服务支持** - 同时管理 Claude Code、Codex 和 Droid 配置
 - 💻 **命令行模式** - 支持非交互式命令行切换
 - 📂 **自动导入** - 首次运行时自动导入现有配置
 - 🔄 **实时更新** - 更改立即应用到您的配置文件
@@ -34,6 +34,7 @@ switcher
 # 或通过 CLI 直接切换
 switcher -switch-claude "OpenAI GPT-4"
 switcher -switch-codex "Anthropic Claude"
+switcher -switch-droid "Droid Model"
 ```
 
 ## 📦 安装
@@ -42,7 +43,7 @@ switcher -switch-codex "Anthropic Claude"
 
 ```bash
 # 克隆仓库
-git clone https://github.com/yourusername/switcher.git
+git clone https://github.com/bingfengfeifei/switcher.git
 cd switcher
 
 # 构建并安装
@@ -54,10 +55,10 @@ sudo make install
 
 ```bash
 # 直接安装
-go install github.com/yourusername/switcher@latest
+go install github.com/bingfengfeifei/switcher@latest
 
 # 或克隆后构建
-git clone https://github.com/yourusername/switcher.git
+git clone https://github.com/bingfengfeifei/switcher.git
 cd switcher
 go build -o switcher .
 ```
@@ -85,6 +86,9 @@ switcher -switch-claude "配置名称"
 
 # 切换 Codex 配置
 switcher -switch-codex "配置名称"
+
+# 切换 Droid 配置
+switcher -switch-droid "配置名称"
 ```
 
 ## 📁 文件位置
@@ -96,6 +100,7 @@ switcher -switch-codex "配置名称"
 | **Claude Code** | `~/.claude/settings.json` | Claude Code 设置 |
 | **Codex 认证** | `~/.codex/auth.json` | Codex 身份验证 |
 | **Codex 配置** | `~/.codex/config.toml` | Codex 配置 |
+| **Droid 配置** | `~/.factory/config.json` | Droid 配置 |
 
 ## 🛠️ 配置结构
 
@@ -120,24 +125,36 @@ switcher -switch-codex "配置名称"
 
 ```
 switcher/
-├── main.go      # 入口点和 CLI 参数
-├── config.go    # 配置管理
-├── tui.go       # TUI 实现
-├── Makefile     # 构建自动化
-└── README.md    # 本文件
+├── main.go            # 入口点和 CLI 参数
+├── tui/
+│   ├── config.go      # 配置管理
+│   ├── controller.go  # 事件处理和状态机
+│   ├── menu.go        # 状态定义和视图路由
+│   ├── init.go        # 模型初始化
+│   ├── style.go       # 样式和UI组件
+│   ├── util.go        # 工具函数
+│   ├── claudecode.go  # Claude Code 服务组件
+│   ├── codex.go       # Codex 服务组件
+│   └── droid.go       # Droid 服务组件
+├── Makefile           # 构建自动化
+└── README.md          # 本文件
 ```
 
 ### 核心组件
 
-- **配置引擎** (`config.go`) - 处理配置的加载、保存和应用
-- **TUI 框架** (`tui.go`) - 使用 Bubble Tea 的精美终端界面
-- **CLI 接口** (`main.go`) - 命令行切换功能
+- **配置引擎** (`tui/config.go`) - 处理配置的加载、保存和应用，支持 Claude Code、Codex 和 Droid
+- **TUI 控制器** (`tui/controller.go`) - 中央事件处理、状态转换和键盘输入处理
+- **TUI 菜单系统** (`tui/menu.go`) - 状态管理、模型结构和视图路由
+- **服务组件** (`tui/*code*.go`) - 各服务的列表视图和专用逻辑
+- **样式系统** (`tui/style.go`) - 使用 Lipgloss 的样式库
+- **CLI 接口** (`main.go`) - 命令行切换功能和 TUI 初始化
 
 ## 🔧 开发
 
 ### 环境要求
 
 - Go 1.24.0 或更高版本
+- 仅支持 Linux 操作系统
 - Make（可选，用于构建自动化）
 
 ### 构建
@@ -201,9 +218,9 @@ TUI 支持高级用户的键盘快捷键：
 
 如果您遇到任何问题或有功能请求：
 
-- 🐛 [报告错误](https://github.com/yourusername/switcher/issues/new?template=bug_report.md)
-- 💡 [请求功能](https://github.com/yourusername/switcher/issues/new?template=feature_request.md)
-- 💬 [开始讨论](https://github.com/yourusername/switcher/discussions)
+- 🐛 [报告错误](https://github.com/bingfengfeifei/switcher/issues/new?template=bug_report.md)
+- 💡 [请求功能](https://github.com/bingfengfeifei/switcher/issues/new?template=feature_request.md)
+- 💬 [开始讨论](https://github.com/bingfengfeifei/switcher/discussions)
 
 ---
 
