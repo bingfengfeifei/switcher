@@ -19,6 +19,7 @@
 ## ✨ Features
 
 - 🎨 **Beautiful TUI** - Elegant terminal experience built with [Bubble Tea](https://github.com/charmbracelet/bubbletea)
+- 🌐 **Bilingual Support** - Seamlessly switch between English and Chinese with 'L' key
 - ⚡ **Quick Switching** - Instantly switch between different API configurations
 - 🔒 **Secure Management** - API keys are masked in display for security
 - 📝 **Configuration CRUD** - Easily add, edit, delete, and manage configurations
@@ -28,6 +29,29 @@
 - 🔄 **Live Updates** - Changes are immediately applied to your configuration files
 
 ## 🎬 Demo
+
+### Main Menu
+<div align="center">
+<img src="docs/screenshots/main-menu.png" alt="Main Menu" width="600"/>
+
+*Main menu with bilingual support - easily switch between services or change language*
+</div>
+
+### Configuration List
+<div align="center">
+<img src="docs/screenshots/config-list.png" alt="Configuration List" width="600"/>
+
+*Browse and manage your configurations with active status indicators*
+</div>
+
+### Edit Configuration
+<div align="center">
+<img src="docs/screenshots/edit-config.png" alt="Edit Configuration" width="600"/>
+
+*Intuitive form interface with field-by-field editing and API key masking*
+</div>
+
+### Quick Commands
 
 ```bash
 # Launch interactive TUI

@@ -19,6 +19,7 @@
 ## ✨ 功能特性
 
 - 🎨 **精美 TUI 界面** - 基于 [Bubble Tea](https://github.com/charmbracelet/bubbletea) 构建的优雅终端体验
+- 🌐 **双语支持** - 按 'L' 键即可在中英文之间无缝切换
 - ⚡ **快速切换** - 即时切换不同的 API 配置
 - 🔒 **安全管理** - API 密钥在显示时会被遮蔽，确保安全
 - 📝 **配置 CRUD** - 轻松添加、编辑、删除和管理配置
@@ -28,6 +29,29 @@
 - 🔄 **实时更新** - 更改立即应用到您的配置文件
 
 ## 🎬 演示
+
+### 主菜单
+<div align="center">
+<img src="docs/screenshots/main-menu.png" alt="主菜单" width="600"/>
+
+*支持双语的主菜单 - 轻松切换服务或更改语言*
+</div>
+
+### 配置列表
+<div align="center">
+<img src="docs/screenshots/config-list.png" alt="配置列表" width="600"/>
+
+*浏览和管理您的配置，带有活动状态指示器*
+</div>
+
+### 编辑配置
+<div align="center">
+<img src="docs/screenshots/edit-config.png" alt="编辑配置" width="600"/>
+
+*直观的表单界面，支持逐字段编辑和 API 密钥遮蔽*
+</div>
+
+### 快速命令
 
 ```bash
 # 启动交互式 TUI
