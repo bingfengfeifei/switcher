@@ -8,6 +8,18 @@ import (
 	"strings"
 )
 
+var platformPaths PlatformPaths
+var shellManager ShellManager
+
+func init() {
+	var err error
+	platformPaths, err = NewPlatformPaths()
+	if err != nil {
+		panic(fmt.Sprintf("failed to initialize platform paths: %v", err))
+	}
+	shellManager = NewShellManager()
+}
+
 type ServiceConfig struct {
 	Name                 string `json:"name"`
 	Provider             string `json:"provider"`
@@ -85,8 +97,9 @@ type CodexAuth struct {
 }
 
 func (c *Config) Save() error {
-	configDir := "/opt/switcher"
-	if err := os.MkdirAll(configDir, 0755); err != nil {
+	configPath := c.getConfigPath()
+	configDir := filepath.Dir(configPath)
+	if err := mkdirWithPerms(configDir, 0755); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
 
@@ -95,7 +108,7 @@ func (c *Config) Save() error {
 		return fmt.Errorf("failed to marshal config: %w", err)
 	}
 
-	return os.WriteFile(c.getConfigPath(), data, 0644)
+	return writeFileWithPerms(configPath, data, 0644)
 }
 
 func (c *Config) Load() error {
@@ -135,18 +148,13 @@ func (c *Config) Load() error {
 }
 
 func (c *Config) importExistingConfigs() {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return
-	}
-
 	// Check if config already exists
 	if _, err := os.Stat(c.getConfigPath()); err == nil {
 		return // Config already exists, don't import
 	}
 
 	// Import Claude Code configuration
-	claudeSettingsPath := filepath.Join(home, ".claude", "settings.json")
+	claudeSettingsPath := filepath.Join(platformPaths.GetClaudeConfigDir(), "settings.json")
 	if data, err := os.ReadFile(claudeSettingsPath); err == nil {
 		var settings ClaudeSettings
 		if err := json.Unmarshal(data, &settings); err == nil {
@@ -166,8 +174,8 @@ func (c *Config) importExistingConfigs() {
 	}
 
 	// Import Codex configuration
-	codexAuthPath := filepath.Join(home, ".codex", "auth.json")
-	codexConfigPath := filepath.Join(home, ".codex", "config.toml")
+	codexAuthPath := filepath.Join(platformPaths.GetCodexConfigDir(), "auth.json")
+	codexConfigPath := filepath.Join(platformPaths.GetCodexConfigDir(), "config.toml")
 
 	if authData, err := os.ReadFile(codexAuthPath); err == nil {
 		var auth CodexAuth
@@ -206,7 +214,7 @@ func (c *Config) importExistingConfigs() {
 	}
 
 	// Import Droid configuration from Factory
-	factoryConfigPath := filepath.Join(home, ".factory", "config.json")
+	factoryConfigPath := filepath.Join(platformPaths.GetDroidConfigDir(), "config.json")
 	if factoryData, err := os.ReadFile(factoryConfigPath); err == nil {
 		var factoryConfig FactoryConfig
 		if err := json.Unmarshal(factoryData, &factoryConfig); err == nil && len(factoryConfig.CustomModels) > 0 {
@@ -226,7 +234,7 @@ func (c *Config) importExistingConfigs() {
 }
 
 func (c *Config) getConfigPath() string {
-	return "/opt/switcher/config.json"
+	return platformPaths.GetAppConfigPath()
 }
 
 // migrateCodexConfigs migrates old codex configurations to new format with default values
@@ -339,12 +347,7 @@ func (c *Config) SwitchClaudeCode(config *ServiceConfig) error {
 		return fmt.Errorf("config cannot be nil")
 	}
 
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("failed to get home directory: %w", err)
-	}
-
-	settingsPath := filepath.Join(home, ".claude", "settings.json")
+	settingsPath := filepath.Join(platformPaths.GetClaudeConfigDir(), "settings.json")
 
 	settings := ClaudeSettings{
 		Env: map[string]string{
@@ -368,11 +371,11 @@ func (c *Config) SwitchClaudeCode(config *ServiceConfig) error {
 	}
 
 	claudeDir := filepath.Dir(settingsPath)
-	if err := os.MkdirAll(claudeDir, 0755); err != nil {
+	if err := mkdirWithPerms(claudeDir, 0755); err != nil {
 		return fmt.Errorf("failed to create .claude directory: %w", err)
 	}
 
-	return os.WriteFile(settingsPath, data, 0644)
+	return writeFileWithPerms(settingsPath, data, 0644)
 }
 
 func (c *Config) SwitchCodex(config *ServiceConfig) error {
@@ -380,13 +383,8 @@ func (c *Config) SwitchCodex(config *ServiceConfig) error {
 		return fmt.Errorf("config cannot be nil")
 	}
 
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("failed to get home directory: %w", err)
-	}
-
-	codexDir := filepath.Join(home, ".codex")
-	if err := os.MkdirAll(codexDir, 0755); err != nil {
+	codexDir := platformPaths.GetCodexConfigDir()
+	if err := mkdirWithPerms(codexDir, 0755); err != nil {
 		return fmt.Errorf("failed to create .codex directory: %w", err)
 	}
 
@@ -401,7 +399,7 @@ func (c *Config) SwitchCodex(config *ServiceConfig) error {
 	}
 
 	authPath := filepath.Join(codexDir, "auth.json")
-	if err := os.WriteFile(authPath, authData, 0644); err != nil {
+	if err := writeFileWithPerms(authPath, authData, 0644); err != nil {
 		return fmt.Errorf("failed to write auth.json: %w", err)
 	}
 
@@ -461,7 +459,7 @@ func (c *Config) SwitchCodex(config *ServiceConfig) error {
 
 	// Write updated config.toml
 	tomlContent := c.generateCodexConfigTOML(existingConfig)
-	if err := os.WriteFile(configPath, []byte(tomlContent), 0644); err != nil {
+	if err := writeFileWithPerms(configPath, []byte(tomlContent), 0644); err != nil {
 		return err
 	}
 
@@ -470,7 +468,7 @@ func (c *Config) SwitchCodex(config *ServiceConfig) error {
 	if provider.EnvKey == "" {
 		provider.EnvKey = "CODEX_KEY"
 	}
-	return c.setShellEnvVar(provider.EnvKey, config.APIKey)
+	return shellManager.SetEnvVar(provider.EnvKey, config.APIKey)
 }
 
 func (c *Config) loadCodexConfig(path string) CodexConfig {
@@ -679,13 +677,8 @@ func (c *Config) SwitchDroid(config *DroidConfig) error {
 		return fmt.Errorf("config cannot be nil")
 	}
 
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("failed to get home directory: %w", err)
-	}
-
-	factoryDir := filepath.Join(home, ".factory")
-	if err := os.MkdirAll(factoryDir, 0755); err != nil {
+	factoryDir := platformPaths.GetDroidConfigDir()
+	if err := mkdirWithPerms(factoryDir, 0755); err != nil {
 		return fmt.Errorf("failed to create .factory directory: %w", err)
 	}
 
@@ -700,7 +693,7 @@ func (c *Config) SwitchDroid(config *DroidConfig) error {
 	}
 
 	configPath := filepath.Join(factoryDir, "config.json")
-	if err := os.WriteFile(configPath, data, 0644); err != nil {
+	if err := writeFileWithPerms(configPath, data, 0644); err != nil {
 		return fmt.Errorf("failed to write config.json: %w", err)
 	}
 
@@ -748,92 +741,7 @@ func (c *Config) SwitchDroid(config *DroidConfig) error {
 	finalContent.WriteString(string(updatedData))
 	finalContent.WriteString("\n")
 
-	return os.WriteFile(settingsPath, []byte(finalContent.String()), 0644)
-}
-
-// setShellEnvVar adds environment variable to shell configuration files
-func (c *Config) setShellEnvVar(key, value string) error {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("failed to get home directory: %w", err)
-	}
-
-	// Update .bashrc
-	bashrcPath := filepath.Join(home, ".bashrc")
-	if err := c.updateShellConfig(bashrcPath, key, value); err != nil {
-		return fmt.Errorf("failed to update .bashrc: %w", err)
-	}
-
-	// Update .config/fish/config.fish
-	fishConfigDir := filepath.Join(home, ".config", "fish")
-	if err := os.MkdirAll(fishConfigDir, 0755); err != nil {
-		return fmt.Errorf("failed to create fish config directory: %w", err)
-	}
-
-	fishConfigPath := filepath.Join(fishConfigDir, "config.fish")
-	if err := c.updateFishConfig(fishConfigPath, key, value); err != nil {
-		return fmt.Errorf("failed to update fish config: %w", err)
-	}
-
-	return nil
-}
-
-// updateShellConfig updates bash-style shell configuration
-func (c *Config) updateShellConfig(configPath, key, value string) error {
-	content, err := os.ReadFile(configPath)
-	if err != nil && !os.IsNotExist(err) {
-		return err
-	}
-
-	configContent := string(content)
-	lines := strings.Split(configContent, "\n")
-
-	// Remove existing export for this key
-	var newLines []string
-	keyPattern := fmt.Sprintf("export %s=", key)
-
-	for _, line := range lines {
-		if !strings.Contains(line, keyPattern) {
-			newLines = append(newLines, line)
-		}
-	}
-
-	// Add new export line
-	exportLine := fmt.Sprintf("export %s=\"%s\"", key, value)
-	newLines = append(newLines, exportLine)
-
-	// Write back to file
-	updatedContent := strings.Join(newLines, "\n")
-	return os.WriteFile(configPath, []byte(updatedContent), 0644)
-}
-
-// updateFishConfig updates fish shell configuration
-func (c *Config) updateFishConfig(configPath, key, value string) error {
-	content, err := os.ReadFile(configPath)
-	if err != nil && !os.IsNotExist(err) {
-		return err
-	}
-
-	configContent := string(content)
-	lines := strings.Split(configContent, "\n")
-
-	// Remove existing set command for this key
-	var newLines []string
-	keyPattern := fmt.Sprintf("set -x %s ", key)
-
-	for _, line := range lines {
-		if !strings.Contains(line, keyPattern) {
-			newLines = append(newLines, line)
-		}
-	}
-
-	// Add new set line
-	setLine := fmt.Sprintf("set -x %s \"%s\"", key, value)
-	newLines = append(newLines, setLine)
-
-	// Write back to file
-	updatedContent := strings.Join(newLines, "\n")
-	return os.WriteFile(configPath, []byte(updatedContent), 0644)
+	return writeFileWithPerms(settingsPath, []byte(finalContent.String()), 0644)
 }
 
 // findConfigIndex 查找配置在原始列表中的索引

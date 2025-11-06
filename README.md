@@ -4,7 +4,7 @@
 
 ![Go 版本](https://img.shields.io/badge/Go-1.24+-00ADD8?style=for-the-badge&logo=go)
 ![开源协议](https://img.shields.io/badge/License-Apache%202.0-green?style=for-the-badge)
-![支持平台](https://img.shields.io/badge/Platform-Linux-lightgrey?style=for-the-badge)
+![支持平台](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey?style=for-the-badge)
 
 *一款精美的基于 TUI 的命令行工具，用于管理和切换 Claude Code、Codex 与 Droid 配置*
 
@@ -39,7 +39,9 @@ switcher -switch-droid "Droid Model"
 
 ## 📦 安装
 
-### 从源码安装
+### Linux / macOS
+
+#### 从源码安装
 
 ```bash
 # 克隆仓库
@@ -51,7 +53,7 @@ make build
 sudo make install
 ```
 
-### 使用 Go 安装
+#### 使用 Go 安装
 
 ```bash
 # 直接安装
@@ -61,6 +63,34 @@ go install github.com/bingfengfeifei/switcher@latest
 git clone https://github.com/bingfengfeifei/switcher.git
 cd switcher
 go build -o switcher .
+```
+
+### Windows
+
+#### 使用 PowerShell
+
+```powershell
+# 克隆仓库
+git clone https://github.com/bingfengfeifei/switcher.git
+cd switcher
+
+# 构建
+.\build.ps1
+
+# 构建并安装到系统
+.\build.ps1 -Install
+```
+
+#### 使用 Go
+
+```powershell
+# 直接安装
+go install github.com/bingfengfeifei/switcher@latest
+
+# 或克隆后构建
+git clone https://github.com/bingfengfeifei/switcher.git
+cd switcher
+go build -o switcher.exe .
 ```
 
 ## 🚀 使用方法
@@ -93,14 +123,38 @@ switcher -switch-droid "配置名称"
 
 ## 📁 文件位置
 
+### Linux
+
 | 文件 | 位置 | 用途 |
 |------|----------|---------|
 | **可执行文件** | `/usr/bin/switcher` | 系统可执行文件 |
-| **应用配置** | `/opt/switcher/config.json` | 存储的配置 |
+| **应用配置** | `~/.config/switcher/config.json` | 存储的配置 |
 | **Claude Code** | `~/.claude/settings.json` | Claude Code 设置 |
 | **Codex 认证** | `~/.codex/auth.json` | Codex 身份验证 |
 | **Codex 配置** | `~/.codex/config.toml` | Codex 配置 |
 | **Droid 配置** | `~/.factory/config.json` | Droid 配置 |
+
+### macOS
+
+| 文件 | 位置 | 用途 |
+|------|----------|---------|
+| **可执行文件** | `/usr/bin/switcher` | 系统可执行文件 |
+| **应用配置** | `~/Library/Application Support/switcher/config.json` | 存储的配置 |
+| **Claude Code** | `~/.claude/settings.json` | Claude Code 设置 |
+| **Codex 认证** | `~/.codex/auth.json` | Codex 身份验证 |
+| **Codex 配置** | `~/.codex/config.toml` | Codex 配置 |
+| **Droid 配置** | `~/.factory/config.json` | Droid 配置 |
+
+### Windows
+
+| 文件 | 位置 | 用途 |
+|------|----------|---------|
+| **可执行文件** | `%LOCALAPPDATA%\Programs\switcher\switcher.exe` | 系统可执行文件 |
+| **应用配置** | `%APPDATA%\switcher\config.json` | 存储的配置 |
+| **Claude Code** | `%USERPROFILE%\.claude\settings.json` | Claude Code 设置 |
+| **Codex 认证** | `%USERPROFILE%\.codex\auth.json` | Codex 身份验证 |
+| **Codex 配置** | `%USERPROFILE%\.codex\config.toml` | Codex 配置 |
+| **Droid 配置** | `%USERPROFILE%\.factory\config.json` | Droid 配置 |
 
 ## 🛠️ 配置结构
 
@@ -128,6 +182,8 @@ switcher/
 ├── main.go            # 入口点和 CLI 参数
 ├── tui/
 │   ├── config.go      # 配置管理
+│   ├── platform.go    # 跨平台路径抽象
+│   ├── shell.go       # Shell 环境变量管理
 │   ├── controller.go  # 事件处理和状态机
 │   ├── menu.go        # 状态定义和视图路由
 │   ├── init.go        # 模型初始化
@@ -136,13 +192,16 @@ switcher/
 │   ├── claudecode.go  # Claude Code 服务组件
 │   ├── codex.go       # Codex 服务组件
 │   └── droid.go       # Droid 服务组件
-├── Makefile           # 构建自动化
+├── Makefile           # 构建自动化 (Linux/macOS)
+├── build.ps1          # 构建脚本 (Windows)
 └── README.md          # 本文件
 ```
 
 ### 核心组件
 
 - **配置引擎** (`tui/config.go`) - 处理配置的加载、保存和应用，支持 Claude Code、Codex 和 Droid
+- **平台抽象层** (`tui/platform.go`) - 跨平台路径管理，支持 Linux、macOS 和 Windows
+- **Shell 管理器** (`tui/shell.go`) - 跨平台环境变量管理（bash/zsh/fish/PowerShell）
 - **TUI 控制器** (`tui/controller.go`) - 中央事件处理、状态转换和键盘输入处理
 - **TUI 菜单系统** (`tui/menu.go`) - 状态管理、模型结构和视图路由
 - **服务组件** (`tui/*code*.go`) - 各服务的列表视图和专用逻辑
@@ -154,20 +213,36 @@ switcher/
 ### 环境要求
 
 - Go 1.24.0 或更高版本
-- 仅支持 Linux 操作系统
-- Make（可选，用于构建自动化）
+- 支持 Linux、macOS 和 Windows 操作系统
+- Make（可选，用于 Linux/macOS 构建自动化）
+- PowerShell（Windows 构建）
 
 ### 构建
+
+#### Linux / macOS
 
 ```bash
 # 构建二进制文件
 make build
+
+# 构建所有平台版本
+make build-all
 
 # 安装到系统
 sudo make install
 
 # 清理构建产物
 make clean
+```
+
+#### Windows
+
+```powershell
+# 构建二进制文件
+.\build.ps1
+
+# 构建并安装
+.\build.ps1 -Install
 ```
 
 ### 本地运行
