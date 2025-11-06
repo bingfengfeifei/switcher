@@ -2,19 +2,326 @@
 
 <div align="center">
 
-![Go 版本](https://img.shields.io/badge/Go-1.24+-00ADD8?style=for-the-badge&logo=go)
-![开源协议](https://img.shields.io/badge/License-Apache%202.0-green?style=for-the-badge)
-![支持平台](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey?style=for-the-badge)
+![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?style=for-the-badge&logo=go)
+![License](https://img.shields.io/badge/License-Apache%202.0-green?style=for-the-badge)
+![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey?style=for-the-badge)
+
+**[English](#english) | [中文](#中文)**
+
+</div>
+
+---
+
+## English
+
+<div align="center">
+
+*A beautiful TUI-based CLI tool for managing and switching between Claude Code, Codex, and Droid configurations*
+
+[![Demo](https://img.shields.io/badge/Demo-🎬-ff69b4?style=for-the-badge)](#-demo)
+[![Installation](https://img.shields.io/badge/Installation-📦-4285f4?style=for-the-badge)](#-installation)
+[![Usage](https://img.shields.io/badge/Usage-🚀-f39c12?style=for-the-badge)](#-usage)
+
+</div>
+
+### ✨ Features
+
+- 🎨 **Beautiful TUI** - Elegant terminal experience built with [Bubble Tea](https://github.com/charmbracelet/bubbletea)
+- ⚡ **Quick Switching** - Instantly switch between different API configurations
+- 🔒 **Secure Management** - API keys are masked in display for security
+- 📝 **Configuration CRUD** - Easily add, edit, delete, and manage configurations
+- 🎯 **Three Services** - Manage Claude Code, Codex, and Droid configurations simultaneously
+- 💻 **CLI Mode** - Non-interactive command-line switching support
+- 📂 **Auto Import** - Automatically imports existing configurations on first run
+- 🔄 **Live Updates** - Changes are immediately applied to your configuration files
+
+### 🎬 Demo
+
+```bash
+# Launch interactive TUI
+switcher
+
+# Or switch directly via CLI
+switcher -switch-claude "OpenAI GPT-4"
+switcher -switch-codex "Anthropic Claude"
+switcher -switch-droid "Droid Model"
+```
+
+### 📦 Installation
+
+#### Linux / macOS
+
+**From Source**
+
+```bash
+# Clone repository
+git clone https://github.com/bingfengfeifei/switcher.git
+cd switcher
+
+# Build and install
+make build
+sudo make install
+```
+
+**Using Go**
+
+```bash
+# Direct install
+go install github.com/bingfengfeifei/switcher@latest
+
+# Or clone and build
+git clone https://github.com/bingfengfeifei/switcher.git
+cd switcher
+go build -o switcher .
+```
+
+#### Windows
+
+**Using PowerShell**
+
+```powershell
+# Clone repository
+git clone https://github.com/bingfengfeifei/switcher.git
+cd switcher
+
+# Build
+.\build.ps1
+
+# Build and install to system
+.\build.ps1 -Install
+```
+
+**Using Go**
+
+```powershell
+# Direct install
+go install github.com/bingfengfeifei/switcher@latest
+
+# Or clone and build
+git clone https://github.com/bingfengfeifei/switcher.git
+cd switcher
+go build -o switcher.exe .
+```
+
+### 🚀 Usage
+
+#### Interactive Mode (Default)
+
+```bash
+switcher
+```
+
+Navigate the beautiful TUI with:
+- **↑/↓** or **j/k** - Navigate menu items
+- **Enter** - Select/confirm action
+- **Tab** - Switch between form fields
+- **Esc** - Go back/exit
+- **q** - Quit application
+
+#### Command-line Mode
+
+```bash
+# Switch Claude Code configuration
+switcher -switch-claude "Configuration Name"
+
+# Switch Codex configuration
+switcher -switch-codex "Configuration Name"
+
+# Switch Droid configuration
+switcher -switch-droid "Configuration Name"
+```
+
+### 📁 File Locations
+
+#### Linux
+
+| File | Location | Purpose |
+|------|----------|---------|
+| **Executable** | `/usr/bin/switcher` | System executable |
+| **App Config** | `~/.config/switcher/config.json` | Stored configurations |
+| **Claude Code** | `~/.claude/settings.json` | Claude Code settings |
+| **Codex Auth** | `~/.codex/auth.json` | Codex authentication |
+| **Codex Config** | `~/.codex/config.toml` | Codex configuration |
+| **Droid Config** | `~/.factory/config.json` | Droid configuration |
+
+#### macOS
+
+| File | Location | Purpose |
+|------|----------|---------|
+| **Executable** | `/usr/bin/switcher` | System executable |
+| **App Config** | `~/Library/Application Support/switcher/config.json` | Stored configurations |
+| **Claude Code** | `~/.claude/settings.json` | Claude Code settings |
+| **Codex Auth** | `~/.codex/auth.json` | Codex authentication |
+| **Codex Config** | `~/.codex/config.toml` | Codex configuration |
+| **Droid Config** | `~/.factory/config.json` | Droid configuration |
+
+#### Windows
+
+| File | Location | Purpose |
+|------|----------|---------|
+| **Executable** | `%LOCALAPPDATA%\Programs\switcher\switcher.exe` | System executable |
+| **App Config** | `%APPDATA%\switcher\config.json` | Stored configurations |
+| **Claude Code** | `%USERPROFILE%\.claude\settings.json` | Claude Code settings |
+| **Codex Auth** | `%USERPROFILE%\.codex\auth.json` | Codex authentication |
+| **Codex Config** | `%USERPROFILE%\.codex\config.toml` | Codex configuration |
+| **Droid Config** | `%USERPROFILE%\.factory\config.json` | Droid configuration |
+
+### 🛠️ Configuration Structure
+
+Each service configuration contains:
+
+```json
+{
+  "name": "My API Config",
+  "provider": "openai",
+  "base_url": "https://api.openai.com/v1",
+  "api_key": "sk-..."
+}
+```
+
+### 🎯 Supported Providers
+
+- **OpenAI** - GPT models and API
+- **Anthropic** - Claude models
+- **Custom** - Any OpenAI-compatible API endpoint
+
+### 🏗️ Architecture
+
+```
+switcher/
+├── main.go            # Entry point and CLI arguments
+├── tui/
+│   ├── config.go      # Configuration management
+│   ├── platform.go    # Cross-platform path abstraction
+│   ├── shell.go       # Shell environment variable management
+│   ├── controller.go  # Event handling and state machine
+│   ├── menu.go        # State definitions and view routing
+│   ├── init.go        # Model initialization
+│   ├── style.go       # Styling and UI components
+│   ├── util.go        # Utility functions
+│   ├── claudecode.go  # Claude Code service component
+│   ├── codex.go       # Codex service component
+│   └── droid.go       # Droid service component
+├── Makefile           # Build automation (Linux/macOS)
+├── build.ps1          # Build script (Windows)
+└── README.md          # This file
+```
+
+#### Core Components
+
+- **Configuration Engine** (`tui/config.go`) - Handles loading, saving, and applying configurations for Claude Code, Codex, and Droid
+- **Platform Abstraction** (`tui/platform.go`) - Cross-platform path management for Linux, macOS, and Windows
+- **Shell Manager** (`tui/shell.go`) - Cross-platform environment variable management (bash/zsh/fish/PowerShell)
+- **TUI Controller** (`tui/controller.go`) - Central event handling, state transitions, and keyboard input processing
+- **TUI Menu System** (`tui/menu.go`) - State management, model structure, and view routing
+- **Service Components** (`tui/*code*.go`) - List views and specialized logic for each service
+- **Style System** (`tui/style.go`) - Styling library using Lipgloss
+- **CLI Interface** (`main.go`) - Command-line switching functionality and TUI initialization
+
+### 🔧 Development
+
+#### Requirements
+
+- Go 1.24.0 or higher
+- Linux, macOS, or Windows operating system
+- Make (optional, for Linux/macOS build automation)
+- PowerShell (Windows build)
+
+#### Building
+
+**Linux / macOS**
+
+```bash
+# Build binary
+make build
+
+# Build for all platforms
+make build-all
+
+# Install to system
+sudo make install
+
+# Clean build artifacts
+make clean
+```
+
+**Windows**
+
+```powershell
+# Build binary
+.\build.ps1
+
+# Build and install
+.\build.ps1 -Install
+```
+
+#### Running Locally
+
+```bash
+# Run from source
+go run .
+
+# Or build and run
+go build -o switcher .
+./switcher
+```
+
+### 🎨 Customization
+
+The TUI supports keyboard shortcuts for power users:
+
+- **Vim-style navigation** with `j` and `k`
+- **Quick actions** with single-key operations
+- **Form navigation** with Tab between fields
+- **Escape sequences** for intuitive navigation
+
+### 🔒 Security
+
+- API keys are **masked** in TUI display (`sk-****...`)
+- Configuration files have **appropriate permissions**
+- No API keys are logged or exposed in command output
+
+### 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Create a Pull Request
+
+### 📄 License
+
+This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.
+
+### 🙏 Acknowledgments
+
+- [Bubble Tea](https://github.com/charmbracelet/bubbletea) - Amazing TUI framework
+- [Lipgloss](https://github.com/charmbracelet/lipgloss) - Beautiful styling library
+- The excellent Go community ecosystem
+
+### 📞 Support
+
+If you encounter any issues or have feature requests:
+
+- 🐛 [Report a Bug](https://github.com/bingfengfeifei/switcher/issues/new?template=bug_report.md)
+- 💡 [Request a Feature](https://github.com/bingfengfeifei/switcher/issues/new?template=feature_request.md)
+- 💬 [Start a Discussion](https://github.com/bingfengfeifei/switcher/discussions)
+
+---
+
+## 中文
+
+<div align="center">
 
 *一款精美的基于 TUI 的命令行工具，用于管理和切换 Claude Code、Codex 与 Droid 配置*
 
 [![演示](https://img.shields.io/badge/演示-🎬-ff69b4?style=for-the-badge)](#-演示)
 [![安装](https://img.shields.io/badge/安装-📦-4285f4?style=for-the-badge)](#-安装)
-[![使用](https://img.shields.io/badge/使用-🚀-f39c12?style=for-the-badge)]
+[![使用](https://img.shields.io/badge/使用-🚀-f39c12?style=for-the-badge)](#-使用方法)
 
 </div>
 
-## ✨ 功能特性
+### ✨ 功能特性
 
 - 🎨 **精美 TUI 界面** - 基于 [Bubble Tea](https://github.com/charmbracelet/bubbletea) 构建的优雅终端体验
 - ⚡ **快速切换** - 即时切换不同的 API 配置
@@ -25,7 +332,7 @@
 - 📂 **自动导入** - 首次运行时自动导入现有配置
 - 🔄 **实时更新** - 更改立即应用到您的配置文件
 
-## 🎬 演示
+### 🎬 演示
 
 ```bash
 # 启动交互式 TUI
@@ -37,11 +344,11 @@ switcher -switch-codex "Anthropic Claude"
 switcher -switch-droid "Droid Model"
 ```
 
-## 📦 安装
+### 📦 安装
 
-### Linux / macOS
+#### Linux / macOS
 
-#### 从源码安装
+**从源码安装**
 
 ```bash
 # 克隆仓库
@@ -53,7 +360,7 @@ make build
 sudo make install
 ```
 
-#### 使用 Go 安装
+**使用 Go 安装**
 
 ```bash
 # 直接安装
@@ -65,9 +372,9 @@ cd switcher
 go build -o switcher .
 ```
 
-### Windows
+#### Windows
 
-#### 使用 PowerShell
+**使用 PowerShell**
 
 ```powershell
 # 克隆仓库
@@ -81,7 +388,7 @@ cd switcher
 .\build.ps1 -Install
 ```
 
-#### 使用 Go
+**使用 Go**
 
 ```powershell
 # 直接安装
@@ -93,9 +400,9 @@ cd switcher
 go build -o switcher.exe .
 ```
 
-## 🚀 使用方法
+### 🚀 使用方法
 
-### 交互模式（默认）
+#### 交互模式（默认）
 
 ```bash
 switcher
@@ -108,7 +415,7 @@ switcher
 - **Esc** - 返回/退出
 - **q** - 退出应用程序
 
-### 命令行模式
+#### 命令行模式
 
 ```bash
 # 切换 Claude Code 配置
@@ -121,9 +428,9 @@ switcher -switch-codex "配置名称"
 switcher -switch-droid "配置名称"
 ```
 
-## 📁 文件位置
+### 📁 文件位置
 
-### Linux
+#### Linux
 
 | 文件 | 位置 | 用途 |
 |------|----------|---------|
@@ -134,7 +441,7 @@ switcher -switch-droid "配置名称"
 | **Codex 配置** | `~/.codex/config.toml` | Codex 配置 |
 | **Droid 配置** | `~/.factory/config.json` | Droid 配置 |
 
-### macOS
+#### macOS
 
 | 文件 | 位置 | 用途 |
 |------|----------|---------|
@@ -145,7 +452,7 @@ switcher -switch-droid "配置名称"
 | **Codex 配置** | `~/.codex/config.toml` | Codex 配置 |
 | **Droid 配置** | `~/.factory/config.json` | Droid 配置 |
 
-### Windows
+#### Windows
 
 | 文件 | 位置 | 用途 |
 |------|----------|---------|
@@ -156,7 +463,7 @@ switcher -switch-droid "配置名称"
 | **Codex 配置** | `%USERPROFILE%\.codex\config.toml` | Codex 配置 |
 | **Droid 配置** | `%USERPROFILE%\.factory\config.json` | Droid 配置 |
 
-## 🛠️ 配置结构
+### 🛠️ 配置结构
 
 每个服务配置包含：
 
@@ -169,13 +476,13 @@ switcher -switch-droid "配置名称"
 }
 ```
 
-## 🎯 支持的提供商
+### 🎯 支持的提供商
 
 - **OpenAI** - GPT 模型和 API
 - **Anthropic** - Claude 模型
 - **自定义** - 任何兼容 OpenAI 的 API 端点
 
-## 🏗️ 架构
+### 🏗️ 架构
 
 ```
 switcher/
@@ -197,7 +504,7 @@ switcher/
 └── README.md          # 本文件
 ```
 
-### 核心组件
+#### 核心组件
 
 - **配置引擎** (`tui/config.go`) - 处理配置的加载、保存和应用，支持 Claude Code、Codex 和 Droid
 - **平台抽象层** (`tui/platform.go`) - 跨平台路径管理，支持 Linux、macOS 和 Windows
@@ -208,18 +515,18 @@ switcher/
 - **样式系统** (`tui/style.go`) - 使用 Lipgloss 的样式库
 - **CLI 接口** (`main.go`) - 命令行切换功能和 TUI 初始化
 
-## 🔧 开发
+### 🔧 开发
 
-### 环境要求
+#### 环境要求
 
 - Go 1.24.0 或更高版本
 - 支持 Linux、macOS 和 Windows 操作系统
 - Make（可选，用于 Linux/macOS 构建自动化）
 - PowerShell（Windows 构建）
 
-### 构建
+#### 构建
 
-#### Linux / macOS
+**Linux / macOS**
 
 ```bash
 # 构建二进制文件
@@ -235,7 +542,7 @@ sudo make install
 make clean
 ```
 
-#### Windows
+**Windows**
 
 ```powershell
 # 构建二进制文件
@@ -245,7 +552,7 @@ make clean
 .\build.ps1 -Install
 ```
 
-### 本地运行
+#### 本地运行
 
 ```bash
 # 从源码运行
@@ -256,7 +563,7 @@ go build -o switcher .
 ./switcher
 ```
 
-## 🎨 自定义
+### 🎨 自定义
 
 TUI 支持高级用户的键盘快捷键：
 
@@ -265,13 +572,13 @@ TUI 支持高级用户的键盘快捷键：
 - **表单导航** 使用 Tab 在字段间切换
 - **转义序列** 直观的导航体验
 
-## 🔒 安全性
+### 🔒 安全性
 
 - API 密钥在 TUI 显示中会被**遮蔽**（`sk-****...`）
 - 配置文件具有**适当的权限**
 - 命令输出中不会记录或暴露 API 密钥
 
-## 🤝 贡献
+### 🤝 贡献
 
 1. Fork 本仓库
 2. 创建您的功能分支 (`git checkout -b feature/amazing-feature`)
@@ -279,17 +586,17 @@ TUI 支持高级用户的键盘快捷键：
 4. 推送到分支 (`git push origin feature/amazing-feature`)
 5. 创建 Pull Request
 
-## 📄 开源协议
+### 📄 开源协议
 
 本项目基于 Apache 2.0 协议开源 - 详情请参阅 [LICENSE](LICENSE) 文件。
 
-## 🙏 致谢
+### 🙏 致谢
 
 - [Bubble Tea](https://github.com/charmbracelet/bubbletea) - 超赞的 TUI 框架
 - [Lipgloss](https://github.com/charmbracelet/lipgloss) - 精美的样式库
 - Go 社区的优秀生态系统
 
-## 📞 支持
+### 📞 支持
 
 如果您遇到任何问题或有功能请求：
 
