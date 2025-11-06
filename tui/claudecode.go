@@ -2,6 +2,7 @@ package tui
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,11 +11,11 @@ import (
 )
 
 func (m model) claudeCodeListView() string {
-	header := headerView("Claude Code 配置")
+	header := headerView(t("header_claude"))
 
 	var rows []string
 	if ok, actualBase, _ := checkAppliedClaudeLocal(m.config); !ok && actualBase != "" {
-		warn := errorStyle.Render("⚠️ 实际应用的 Claude 设置与所选配置不一致: " + actualBase)
+		warn := errorStyle.Render(fmt.Sprintf(t("warn_mismatch"), "Claude") + actualBase)
 		rows = append(rows, itemBoxStyle.Render(warn))
 	}
 
@@ -31,7 +32,7 @@ func (m model) claudeCodeListView() string {
 	}
 	{
 		backSel := m.cursor == len(m.config.ClaudeCode)
-		back := menuItemView("← 返回主菜单", backSel)
+		back := menuItemView(t("back_to_menu"), backSel)
 		if backSel {
 			rows = append(rows, itemBoxSelStyle.Render(back))
 		} else {
@@ -46,7 +47,7 @@ func (m model) claudeCodeListView() string {
 	content.WriteString("\n\n")
 	content.WriteString(body)
 	content.WriteString("\n")
-	content.WriteString(statusBarView("↑/↓ 选择", "Enter 切换", "Tab 编辑 Del 删除", "A 添加  V 紧凑/展开  Esc 返回  ←/→ 切服务"))
+	content.WriteString(statusBarView(t("nav_select"), t("nav_confirm"), t("nav_edit"), t("nav_add")+"  "+t("nav_view")+"  "+t("nav_back")+"  "+t("nav_switch_service")))
 	return content.String()
 }
 

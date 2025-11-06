@@ -8,7 +8,7 @@ import (
 )
 
 func (m model) droidListView() string {
-	header := headerView("Droid 配置")
+	header := headerView(t("header_droid"))
 
 	var rows []string
 
@@ -25,7 +25,7 @@ func (m model) droidListView() string {
 	}
 	{
 		backSel := m.cursor == len(m.config.Droid)
-		back := menuItemView("← 返回主菜单", backSel)
+		back := menuItemView(t("back_to_menu"), backSel)
 		if backSel {
 			rows = append(rows, itemBoxSelStyle.Render(back))
 		} else {
@@ -40,12 +40,12 @@ func (m model) droidListView() string {
 	content.WriteString("\n\n")
 	content.WriteString(body)
 	content.WriteString("\n")
-	content.WriteString(statusBarView("↑/↓ 选择", "Enter 切换", "Tab 编辑 Del 删除", "A 添加  V 紧凑/展开  Esc 返回  ←/→ 切服务"))
+	content.WriteString(statusBarView(t("nav_select"), t("nav_confirm"), t("nav_edit"), t("nav_add")+"  "+t("nav_view")+"  "+t("nav_back")+"  "+t("nav_switch_service")))
 	return content.String()
 }
 
 func (m model) addDroidConfigView() string {
-	title := headerView("添加 Droid 配置")
+	title := headerView(fmt.Sprintf(t("form_add"), "Droid"))
 
 	var content strings.Builder
 	content.WriteString(title)
@@ -55,10 +55,10 @@ func (m model) addDroidConfigView() string {
 		label string
 		value string
 	}{
-		{"模型显示名称", m.droidFormData.ModelDisplayName},
-		{"模型名称", m.droidFormData.Model},
-		{"Base URL", m.droidFormData.BaseURL},
-		{"API Key", m.droidFormData.APIKey},
+		{t("field_display_name"), m.droidFormData.ModelDisplayName},
+		{t("field_model_name"), m.droidFormData.Model},
+		{t("field_base_url"), m.droidFormData.BaseURL},
+		{t("field_api_key"), m.droidFormData.APIKey},
 	}
 
 	var inner strings.Builder
@@ -74,12 +74,12 @@ func (m model) addDroidConfigView() string {
 			displayValue = maskAPIKey(field.value)
 		} else if i == FieldAPIKey && m.formField == FieldAPIKey {
 			// 如果正在编辑API密钥字段，显示完整内容但添加提示
-			displayValue = field.value + " (编辑中)"
+			displayValue = field.value + " " + t("hint_editing")
 		}
 
 		highlight := ""
 		if m.formField == i {
-			highlight = fieldHighlightStyle.Render(" ← 正在编辑，请直接输入修改内容")
+			highlight = fieldHighlightStyle.Render(" " + t("hint_input"))
 		}
 
 		inner.WriteString(formRowStyle.Render(fmt.Sprintf("%s %s:%s %s", prefix, field.label, highlight, displayValue)) + "\n")
@@ -87,13 +87,13 @@ func (m model) addDroidConfigView() string {
 
 	content.WriteString(boxStyle.Render(inner.String()))
 	content.WriteString("\n")
-	content.WriteString(statusBarView("Tab/↑/↓ 切字段", "Enter 保存", "Esc 取消", ""))
+	content.WriteString(statusBarView(t("form_nav_field"), t("form_nav_save"), t("form_nav_cancel"), ""))
 
 	// 添加当前编辑状态提示
 	if m.formField >= 0 && m.formField < DroidFieldCount {
-		content.WriteString("\n" + fieldHighlightStyle.Render("✨ 当前正在编辑: ") + fields[m.formField].label)
+		content.WriteString("\n" + fieldHighlightStyle.Render(t("hint_current_edit")) + fields[m.formField].label)
 		if m.formField == FieldAPIKey {
-			content.WriteString("\n" + fieldHighlightStyle.Render("   (API Key 正在显示完整内容以便编辑)"))
+			content.WriteString("\n" + fieldHighlightStyle.Render("   " + t("hint_apikey_visible")))
 		}
 	}
 
@@ -101,7 +101,7 @@ func (m model) addDroidConfigView() string {
 }
 
 func (m model) editDroidConfigView() string {
-	title := headerView("编辑 Droid 配置")
+	title := headerView(fmt.Sprintf(t("form_edit"), "Droid"))
 
 	var content strings.Builder
 	content.WriteString(title)
@@ -111,10 +111,10 @@ func (m model) editDroidConfigView() string {
 		label string
 		value string
 	}{
-		{"模型显示名称", m.droidFormData.ModelDisplayName},
-		{"模型名称", m.droidFormData.Model},
-		{"Base URL", m.droidFormData.BaseURL},
-		{"API Key", m.droidFormData.APIKey},
+		{t("field_display_name"), m.droidFormData.ModelDisplayName},
+		{t("field_model_name"), m.droidFormData.Model},
+		{t("field_base_url"), m.droidFormData.BaseURL},
+		{t("field_api_key"), m.droidFormData.APIKey},
 	}
 
 	var inner strings.Builder
@@ -130,12 +130,12 @@ func (m model) editDroidConfigView() string {
 			displayValue = maskAPIKey(field.value)
 		} else if i == FieldAPIKey && m.formField == FieldAPIKey {
 			// 如果正在编辑API密钥字段，显示完整内容但添加提示
-			displayValue = field.value + " (编辑中)"
+			displayValue = field.value + " " + t("hint_editing")
 		}
 
 		highlight := ""
 		if m.formField == i {
-			highlight = fieldHighlightStyle.Render(" ← 正在编辑，请直接输入修改内容")
+			highlight = fieldHighlightStyle.Render(" " + t("hint_input"))
 		}
 
 		inner.WriteString(formRowStyle.Render(fmt.Sprintf("%s %s:%s %s", prefix, field.label, highlight, displayValue)) + "\n")
@@ -143,13 +143,13 @@ func (m model) editDroidConfigView() string {
 
 	content.WriteString(boxStyle.Render(inner.String()))
 	content.WriteString("\n")
-	content.WriteString(statusBarView("Tab/↑/↓ 切字段", "Enter 保存", "Esc 取消", ""))
+	content.WriteString(statusBarView(t("form_nav_field"), t("form_nav_save"), t("form_nav_cancel"), ""))
 
 	// 添加当前编辑状态提示
 	if m.formField >= 0 && m.formField < DroidFieldCount {
-		content.WriteString("\n" + fieldHighlightStyle.Render("✨ 当前正在编辑: ") + fields[m.formField].label)
+		content.WriteString("\n" + fieldHighlightStyle.Render(t("hint_current_edit")) + fields[m.formField].label)
 		if m.formField == FieldAPIKey {
-			content.WriteString("\n" + fieldHighlightStyle.Render("   (API Key 正在显示完整内容以便编辑)"))
+			content.WriteString("\n" + fieldHighlightStyle.Render("   " + t("hint_apikey_visible")))
 		}
 	}
 

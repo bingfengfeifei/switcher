@@ -58,7 +58,7 @@ func menuItemView(text string, selected bool) string {
 func listRowView(cfg ServiceConfig, selected, active bool, compact bool) string {
 	name := cfg.Name
 	if active {
-		name = name + " " + activeStyle.Render("[当前使用]")
+		name = name + " " + activeStyle.Render(t("display_active"))
 	}
 	badge := providerBadge(cfg.Provider)
 	var text string
@@ -66,9 +66,9 @@ func listRowView(cfg ServiceConfig, selected, active bool, compact bool) string 
 		text = fmt.Sprintf("%s  · %s", name, badge)
 	} else {
 		lines := []string{
-			fmt.Sprintf("配置名称: %s", name),
-			fmt.Sprintf("Provider: %s", badge),
-			fmt.Sprintf("Base URL: %s", cfg.BaseURL),
+			fmt.Sprintf(t("display_name"), name),
+			fmt.Sprintf(t("display_provider"), badge),
+			fmt.Sprintf(t("display_base_url"), cfg.BaseURL),
 		}
 		text = strings.Join(lines, "\n")
 	}

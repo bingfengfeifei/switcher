@@ -156,6 +156,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case 'v', 'V':
 				// 切换紧凑/展开模式
 				m.compact = !m.compact
+			case 'l', 'L':
+				// 切换语言
+				ToggleLanguage()
+				m.config.Language = GetLanguage()
+				m.config.Save()
+				m.error = t("success_lang_switch")
 			case 'a', 'A':
 				if m.state == claudeCodeList {
 					m.state = addClaudeCode
@@ -245,12 +251,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if err != nil {
 						m.error = err.Error()
 					} else {
-						m.error = "✅ Claude Code 配置添加成功！"
+						m.error = t("success_add_claude")
 						m.state = claudeCodeList
 						m.cursor = 0
 					}
 				} else {
-					m.error = "⚠️ 请填写所有字段"
+					m.error = t("error_fill_all")
 				}
 			} else if m.state == addCodex {
 				if m.formData.Name != "" && m.formData.Provider != "" && m.formData.BaseURL != "" && m.formData.APIKey != "" {
@@ -266,24 +272,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if err := m.config.AddCodexConfig(m.formData); err != nil {
 						m.error = err.Error()
 					} else {
-						m.error = "✅ Codex 配置添加成功！"
+						m.error = t("success_add_codex")
 						m.state = codexList
 						m.cursor = 0
 					}
 				} else {
-					m.error = "⚠️ 请填写所有字段"
+					m.error = t("error_fill_all")
 				}
 			} else if m.state == addDroid {
 				if m.droidFormData.ModelDisplayName != "" && m.droidFormData.Model != "" && m.droidFormData.BaseURL != "" && m.droidFormData.APIKey != "" {
 					if err := m.config.AddDroidConfig(m.droidFormData); err != nil {
 						m.error = err.Error()
 					} else {
-						m.error = "✅ Droid 配置添加成功！"
+						m.error = t("success_add_droid")
 						m.state = droidList
 						m.cursor = 0
 					}
 				} else {
-					m.error = "⚠️ 请填写所有字段"
+					m.error = t("error_fill_all")
 				}
 			} else if m.state == editClaudeCode {
 				if m.formData.Name != "" && m.formData.Provider != "" && m.formData.BaseURL != "" && m.formData.APIKey != "" {
@@ -292,12 +298,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if err != nil {
 						m.error = err.Error()
 					} else {
-						m.error = "✅ Claude Code 配置更新成功！"
+						m.error = t("success_update_claude")
 						m.state = claudeCodeList
 						m.cursor = 0
 					}
 				} else {
-					m.error = "⚠️ 请填写所有字段"
+					m.error = t("error_fill_all")
 				}
 			} else if m.state == editCodex {
 				if m.formData.Name != "" && m.formData.Provider != "" && m.formData.BaseURL != "" && m.formData.APIKey != "" {
@@ -318,12 +324,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if err != nil {
 						m.error = err.Error()
 					} else {
-						m.error = "✅ Codex 配置更新成功！"
+						m.error = t("success_update_codex")
 						m.state = codexList
 						m.cursor = 0
 					}
 				} else {
-					m.error = "⚠️ 请填写所有字段"
+					m.error = t("error_fill_all")
 				}
 			} else if m.state == editDroid {
 				if m.droidFormData.ModelDisplayName != "" && m.droidFormData.Model != "" && m.droidFormData.BaseURL != "" && m.droidFormData.APIKey != "" {
@@ -332,12 +338,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if err != nil {
 						m.error = err.Error()
 					} else {
-						m.error = "✅ Droid 配置更新成功！"
+						m.error = t("success_update_droid")
 						m.state = droidList
 						m.cursor = 0
 					}
 				} else {
-					m.error = "⚠️ 请填写所有字段"
+					m.error = t("error_fill_all")
 				}
 			} else {
 				return m.handleSelect()
@@ -354,7 +360,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.cursor < len(m.sortedClaudeCode) {
 					originalIndex := findConfigIndex(m.config.ClaudeCode, m.sortedClaudeCode[m.cursor])
 					if originalIndex == -1 {
-						m.error = "❌ 配置索引错误"
+						m.error = t("error_config_index")
 						break
 					}
 					m.editIndex = originalIndex
@@ -368,7 +374,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.cursor < len(m.sortedCodex) {
 					originalIndex := findConfigIndex(m.config.Codex, m.sortedCodex[m.cursor])
 					if originalIndex == -1 {
-						m.error = "❌ 配置索引错误"
+						m.error = t("error_config_index")
 						break
 					}
 					m.editIndex = originalIndex
@@ -382,7 +388,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.cursor < len(m.sortedDroid) {
 					originalIndex := findDroidConfigIndex(m.config.Droid, m.sortedDroid[m.cursor])
 					if originalIndex == -1 {
-						m.error = "❌ 配置索引错误"
+						m.error = t("error_config_index")
 						break
 					}
 					m.editIndex = originalIndex
@@ -410,24 +416,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if err := m.config.Save(); err != nil {
 						m.error = err.Error()
 					} else {
-						m.error = "✅ Claude Code 配置更新成功！"
+						m.error = t("success_update_claude")
 						m.state = claudeCodeList
 						m.cursor = 0
 					}
 				} else {
-					m.error = "⚠️ 请填写所有字段"
+					m.error = t("error_fill_all")
 				}
 			} else if m.state == addClaudeCode {
 				if m.formData.Name != "" && m.formData.Provider != "" && m.formData.BaseURL != "" && m.formData.APIKey != "" {
 					if err := m.config.AddClaudeCodeConfig(m.formData); err != nil {
 						m.error = err.Error()
 					} else {
-						m.error = "✅ Claude Code 配置添加成功！"
+						m.error = t("success_add_claude")
 						m.state = claudeCodeList
 						m.cursor = 0
 					}
 				} else {
-					m.error = "⚠️ 请填写所有字段"
+					m.error = t("error_fill_all")
 				}
 			} else if m.state == editCodex {
 				if m.formData.Name != "" && m.formData.Provider != "" && m.formData.BaseURL != "" && m.formData.APIKey != "" {
@@ -447,12 +453,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if err := m.config.Save(); err != nil {
 						m.error = err.Error()
 					} else {
-						m.error = "✅ Codex 配置更新成功！"
+						m.error = t("success_update_codex")
 						m.state = codexList
 						m.cursor = 0
 					}
 				} else {
-					m.error = "⚠️ 请填写所有字段"
+					m.error = t("error_fill_all")
 				}
 			} else if m.state == addCodex {
 				if m.formData.Name != "" && m.formData.Provider != "" && m.formData.BaseURL != "" && m.formData.APIKey != "" {
@@ -468,12 +474,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if err := m.config.AddCodexConfig(m.formData); err != nil {
 						m.error = err.Error()
 					} else {
-						m.error = "✅ Codex 配置添加成功！"
+						m.error = t("success_add_codex")
 						m.state = codexList
 						m.cursor = 0
 					}
 				} else {
-					m.error = "⚠️ 请填写所有字段"
+					m.error = t("error_fill_all")
 				}
 			} else if m.state == editDroid {
 				if m.droidFormData.ModelDisplayName != "" && m.droidFormData.Model != "" && m.droidFormData.BaseURL != "" && m.droidFormData.APIKey != "" {
@@ -481,24 +487,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if err := m.config.Save(); err != nil {
 						m.error = err.Error()
 					} else {
-						m.error = "✅ Droid 配置更新成功！"
+						m.error = t("success_update_droid")
 						m.state = droidList
 						m.cursor = 0
 					}
 				} else {
-					m.error = "⚠️ 请填写所有字段"
+					m.error = t("error_fill_all")
 				}
 			} else if m.state == addDroid {
 				if m.droidFormData.ModelDisplayName != "" && m.droidFormData.Model != "" && m.droidFormData.BaseURL != "" && m.droidFormData.APIKey != "" {
 					if err := m.config.AddDroidConfig(m.droidFormData); err != nil {
 						m.error = err.Error()
 					} else {
-						m.error = "✅ Droid 配置添加成功！"
+						m.error = t("success_add_droid")
 						m.state = droidList
 						m.cursor = 0
 					}
 				} else {
-					m.error = "⚠️ 请填写所有字段"
+					m.error = t("error_fill_all")
 				}
 			}
 		case tea.KeyDelete:
@@ -507,7 +513,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.cursor < len(m.sortedClaudeCode) {
 					originalIndex := findConfigIndex(m.config.ClaudeCode, m.sortedClaudeCode[m.cursor])
 					if originalIndex == -1 {
-						m.error = "❌ 配置索引错误"
+						m.error = t("error_config_index")
 						break
 					}
 					m.deleteIndex = originalIndex
@@ -518,7 +524,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.cursor < len(m.sortedCodex) {
 					originalIndex := findConfigIndex(m.config.Codex, m.sortedCodex[m.cursor])
 					if originalIndex == -1 {
-						m.error = "❌ 配置索引错误"
+						m.error = t("error_config_index")
 						break
 					}
 					m.deleteIndex = originalIndex
@@ -529,7 +535,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.cursor < len(m.sortedDroid) {
 					originalIndex := findDroidConfigIndex(m.config.Droid, m.sortedDroid[m.cursor])
 					if originalIndex == -1 {
-						m.error = "❌ 配置索引错误"
+						m.error = t("error_config_index")
 						break
 					}
 					m.deleteIndex = originalIndex
@@ -551,7 +557,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) getMaxCursor() int {
 	switch m.state {
 	case mainMenu:
-		return 6
+		return 7
 	case claudeCodeList:
 		return len(m.sortedClaudeCode) // 返回排序后的配置数量
 	case codexList:
@@ -602,6 +608,12 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 			m.formField = 0
 			m.droidFormData = DroidConfig{}
 		case 6:
+			// 切换语言
+			ToggleLanguage()
+			m.config.Language = GetLanguage()
+			m.config.Save()
+			m.error = t("success_lang_switch")
+		case 7:
 			return m, tea.Quit
 		}
 	case claudeCodeList:
@@ -614,16 +626,16 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 			// 回车直接切换
 			originalIndex := findConfigIndex(m.config.ClaudeCode, m.sortedClaudeCode[m.cursor])
 			if originalIndex == -1 {
-				m.error = "❌ 配置索引错误"
+				m.error = t("error_config_index")
 				break
 			}
 			config := &m.config.ClaudeCode[originalIndex]
 			if err := m.config.SwitchClaudeCode(config); err != nil {
-				m.error = fmt.Sprintf("切换 Claude Code 配置失败: %v", err)
+				m.error = fmt.Sprintf(t("error_switch_claude"), err)
 			} else if err := m.config.SetActiveClaudeCode(originalIndex); err != nil {
 				m.error = err.Error()
 			} else {
-				m.error = "✅ Claude Code 配置切换成功！"
+				m.error = t("success_switch_claude")
 			}
 		}
 		// 操作菜单已移除
@@ -637,16 +649,16 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 			// 回车直接切换
 			originalIndex := findConfigIndex(m.config.Codex, m.sortedCodex[m.cursor])
 			if originalIndex == -1 {
-				m.error = "❌ 配置索引错误"
+				m.error = t("error_config_index")
 				break
 			}
 			config := &m.config.Codex[originalIndex]
 			if err := m.config.SwitchCodex(config); err != nil {
-				m.error = fmt.Sprintf("切换 Codex 配置失败: %v", err)
+				m.error = fmt.Sprintf(t("error_switch_codex"), err)
 			} else if err := m.config.SetActiveCodex(originalIndex); err != nil {
 				m.error = err.Error()
 			} else {
-				m.error = "✅ Codex 配置切换成功！"
+				m.error = t("success_switch_codex")
 			}
 		}
 	case droidList:
@@ -659,16 +671,16 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 			// 回车直接切换
 			originalIndex := findDroidConfigIndex(m.config.Droid, m.sortedDroid[m.cursor])
 			if originalIndex == -1 {
-				m.error = "❌ 配置索引错误"
+				m.error = t("error_config_index")
 				break
 			}
 			config := &m.config.Droid[originalIndex]
 			if err := m.config.SwitchDroid(config); err != nil {
-				m.error = fmt.Sprintf("切换 Droid 配置失败: %v", err)
+				m.error = fmt.Sprintf(t("error_switch_droid"), err)
 			} else if err := m.config.SetActiveDroid(originalIndex); err != nil {
 				m.error = err.Error()
 			} else {
-				m.error = "✅ Droid 配置切换成功！"
+				m.error = t("success_switch_droid")
 			}
 		}
 	// 操作菜单已移除
@@ -815,7 +827,7 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 			if err != nil {
 				m.error = err.Error()
 			} else {
-				m.error = fmt.Sprintf("✅ Claude Code 配置 '%s' 删除成功！", configName)
+				m.error = fmt.Sprintf(t("success_delete_claude"), configName)
 				m.state = claudeCodeList
 				m.cursor = 0
 				// 调整光标位置
@@ -836,7 +848,7 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 			if err != nil {
 				m.error = err.Error()
 			} else {
-				m.error = fmt.Sprintf("✅ Codex 配置 '%s' 删除成功！", configName)
+				m.error = fmt.Sprintf(t("success_delete_codex"), configName)
 				m.state = codexList
 				m.cursor = 0
 				// 调整光标位置
@@ -857,7 +869,7 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 			if err != nil {
 				m.error = err.Error()
 			} else {
-				m.error = fmt.Sprintf("✅ Droid 配置 '%s' 删除成功！", configName)
+				m.error = fmt.Sprintf(t("success_delete_droid"), configName)
 				m.state = droidList
 				m.cursor = 0
 				// 调整光标位置

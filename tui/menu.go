@@ -118,31 +118,32 @@ func (m model) View() string {
 }
 
 func (m model) mainMenuView() string {
-	title := headerView("Codex/Claude Code/Droid配置切换器")
+	title := headerView(t("app_title"))
 
-	activeClaude := "无"
+	activeClaude := t("none")
 	if active := m.config.GetActiveClaudeCode(); active != nil {
 		activeClaude = active.Name
 	}
 
-	activeCodex := "无"
+	activeCodex := t("none")
 	if active := m.config.GetActiveCodex(); active != nil {
 		activeCodex = active.Name
 	}
 
-	activeDroid := "无"
+	activeDroid := t("none")
 	if active := m.config.GetActiveDroid(); active != nil {
 		activeDroid = active.ModelDisplayName
 	}
 
 	items := []string{
-		fmt.Sprintf("🤖 Claude Code 配置 (当前: %s)", activeClaude),
-		fmt.Sprintf("💻 Codex 配置 (当前: %s)", activeCodex),
-		fmt.Sprintf("🔧 Droid 配置 (当前: %s)", activeDroid),
-		"➕ 添加 Claude Code 配置",
-		"➕ 添加 Codex 配置",
-		"➕ 添加 Droid 配置",
-		"🚪 退出程序",
+		fmt.Sprintf(t("menu_claude"), activeClaude),
+		fmt.Sprintf(t("menu_codex"), activeCodex),
+		fmt.Sprintf(t("menu_droid"), activeDroid),
+		t("menu_add_claude"),
+		t("menu_add_codex"),
+		t("menu_add_droid"),
+		t("menu_switch_lang"),
+		t("menu_exit"),
 	}
 
 	var content strings.Builder
@@ -157,13 +158,13 @@ func (m model) mainMenuView() string {
 	}
 
 	content.WriteString("\n")
-	content.WriteString(statusBarView("↑/↓ 选择", "Enter 确认", "Esc 返回", ""))
+	content.WriteString(statusBarView(t("nav_select"), t("nav_confirm"), t("nav_back"), t("nav_lang")))
 
 	return content.String()
 }
 
 func (m model) addConfigView(serviceType string) string {
-	title := headerView(fmt.Sprintf("添加 %s 配置", serviceType))
+	title := headerView(fmt.Sprintf(t("form_add"), serviceType))
 
 	var fields []struct {
 		label string
@@ -186,23 +187,23 @@ func (m model) addConfigView(serviceType string) string {
 			label string
 			value string
 		}{
-			{"配置名称", m.formData.Name},
-			{"Provider", m.formData.Provider},
-			{"Base URL", m.formData.BaseURL},
-			{"API Key", m.formData.APIKey},
-			{"Model", m.formData.Model},
-			{"Wire API", m.formData.WireAPI},
-			{"推理强度", m.formData.ModelReasoningEffort},
+			{t("field_name"), m.formData.Name},
+			{t("field_provider"), m.formData.Provider},
+			{t("field_base_url"), m.formData.BaseURL},
+			{t("field_api_key"), m.formData.APIKey},
+			{t("field_model"), m.formData.Model},
+			{t("field_wire_api"), m.formData.WireAPI},
+			{t("field_reasoning"), m.formData.ModelReasoningEffort},
 		}
 	} else {
 		fields = []struct {
 			label string
 			value string
 		}{
-			{"配置名称", m.formData.Name},
-			{"Provider", m.formData.Provider},
-			{"Base URL", m.formData.BaseURL},
-			{"API Key", m.formData.APIKey},
+			{t("field_name"), m.formData.Name},
+			{t("field_provider"), m.formData.Provider},
+			{t("field_base_url"), m.formData.BaseURL},
+			{t("field_api_key"), m.formData.APIKey},
 		}
 	}
 
@@ -226,7 +227,7 @@ func (m model) addConfigView(serviceType string) string {
 		displayValue := field.value
 		if serviceType == "Codex" && i == FieldWireAPI { // Wire API字段
 			if m.formField == i {
-				displayValue = field.value + " (←/→选择)"
+				displayValue = field.value + " " + t("hint_select")
 			} else {
 				displayValue = field.value
 			}
@@ -234,7 +235,7 @@ func (m model) addConfigView(serviceType string) string {
 		// 对于推理强度字段，显示选择选项
 		if serviceType == "Codex" && i == FieldModelReasoningEffort { // 推理强度字段
 			if m.formField == i {
-				displayValue = field.value + " (←/→选择)"
+				displayValue = field.value + " " + t("hint_select")
 			} else {
 				displayValue = field.value
 			}
@@ -245,13 +246,13 @@ func (m model) addConfigView(serviceType string) string {
 
 	content.WriteString(boxStyle.Render(inner.String()))
 	content.WriteString("\n")
-	content.WriteString(statusBarView("Tab/↑/↓ 切字段", "Enter 保存", "Esc 取消", ""))
+	content.WriteString(statusBarView(t("form_nav_field"), t("form_nav_save"), t("form_nav_cancel"), ""))
 
 	return content.String()
 }
 
 func (m model) editConfigView(serviceType string) string {
-	title := headerView(fmt.Sprintf("编辑 %s 配置", serviceType))
+	title := headerView(fmt.Sprintf(t("form_edit"), serviceType))
 
 	var content strings.Builder
 	content.WriteString(title)
@@ -267,23 +268,23 @@ func (m model) editConfigView(serviceType string) string {
 			label string
 			value string
 		}{
-			{"配置名称", m.formData.Name},
-			{"Provider", m.formData.Provider},
-			{"Base URL", m.formData.BaseURL},
-			{"API Key", m.formData.APIKey},
-			{"Model", m.formData.Model},
-			{"Wire API", m.formData.WireAPI},
-			{"推理强度", m.formData.ModelReasoningEffort},
+			{t("field_name"), m.formData.Name},
+			{t("field_provider"), m.formData.Provider},
+			{t("field_base_url"), m.formData.BaseURL},
+			{t("field_api_key"), m.formData.APIKey},
+			{t("field_model"), m.formData.Model},
+			{t("field_wire_api"), m.formData.WireAPI},
+			{t("field_reasoning"), m.formData.ModelReasoningEffort},
 		}
 	} else {
 		fields = []struct {
 			label string
 			value string
 		}{
-			{"配置名称", m.formData.Name},
-			{"Provider", m.formData.Provider},
-			{"Base URL", m.formData.BaseURL},
-			{"API Key", m.formData.APIKey},
+			{t("field_name"), m.formData.Name},
+			{t("field_provider"), m.formData.Provider},
+			{t("field_base_url"), m.formData.BaseURL},
+			{t("field_api_key"), m.formData.APIKey},
 		}
 	}
 
@@ -300,13 +301,13 @@ func (m model) editConfigView(serviceType string) string {
 			displayValue = maskAPIKey(field.value)
 		} else if i == FieldAPIKey && m.formField == FieldAPIKey {
 			// 如果正在编辑API密钥字段，显示完整内容但添加提示
-			displayValue = field.value + " (编辑中)"
+			displayValue = field.value + " " + t("hint_editing")
 		}
 
 		// 对于Wire API字段，显示选择选项
 		if serviceType == "Codex" && i == FieldWireAPI { // Wire API字段
 			if m.formField == i {
-				displayValue = field.value + " (←/→选择)"
+				displayValue = field.value + " " + t("hint_select")
 			} else {
 				displayValue = field.value
 			}
@@ -315,7 +316,7 @@ func (m model) editConfigView(serviceType string) string {
 		// 对于推理强度字段，显示选择选项
 		if serviceType == "Codex" && i == FieldModelReasoningEffort { // 推理强度字段
 			if m.formField == i {
-				displayValue = field.value + " (←/→选择)"
+				displayValue = field.value + " " + t("hint_select")
 			} else {
 				displayValue = field.value
 			}
@@ -324,9 +325,9 @@ func (m model) editConfigView(serviceType string) string {
 		highlight := ""
 		if m.formField == i {
 			if serviceType == "Codex" && (i == FieldWireAPI || i == FieldModelReasoningEffort) { // Wire API和推理强度字段
-				highlight = fieldHighlightStyle.Render(" ← 使用←/→选择")
+				highlight = fieldHighlightStyle.Render(" " + t("hint_use_arrows"))
 			} else {
-				highlight = fieldHighlightStyle.Render(" ← 正在编辑，请直接输入修改内容")
+				highlight = fieldHighlightStyle.Render(" " + t("hint_input"))
 			}
 		}
 
@@ -335,13 +336,13 @@ func (m model) editConfigView(serviceType string) string {
 
 	content.WriteString(boxStyle.Render(inner.String()))
 	content.WriteString("\n")
-	content.WriteString(statusBarView("Tab/↑/↓ 切字段", "Enter 保存", "Esc 取消", ""))
+	content.WriteString(statusBarView(t("form_nav_field"), t("form_nav_save"), t("form_nav_cancel"), ""))
 
 	// 添加当前编辑状态提示
 	if m.formField >= 0 && m.formField < DroidFieldCount {
-		content.WriteString("\n" + fieldHighlightStyle.Render("✨ 当前正在编辑: ") + fields[m.formField].label)
+		content.WriteString("\n" + fieldHighlightStyle.Render(t("hint_current_edit")) + fields[m.formField].label)
 		if m.formField == FieldAPIKey {
-			content.WriteString("\n" + fieldHighlightStyle.Render("   (API Key 正在显示完整内容以便编辑)"))
+			content.WriteString("\n" + fieldHighlightStyle.Render("   " + t("hint_apikey_visible")))
 		}
 	}
 
@@ -357,22 +358,22 @@ func (m model) confirmDeleteView(serviceType string) string {
 		configName = m.config.Codex[m.deleteIndex].Name
 	}
 
-	title := headerView(fmt.Sprintf("删除 %s 配置", serviceType))
+	title := headerView(fmt.Sprintf(t("confirm_delete_title"), serviceType))
 
 	var content strings.Builder
 	content.WriteString(title)
 	content.WriteString("\n\n")
 
 	// 显示警告信息
-	warning := fmt.Sprintf("⚠️  确定要删除配置 '%s' 吗？", configName)
+	warning := fmt.Sprintf(t("confirm_delete_warn"), configName)
 	content.WriteString(errorStyle.Render(warning))
 	content.WriteString("\n\n")
-	content.WriteString("此操作无法撤销。")
+	content.WriteString(t("confirm_delete_msg"))
 
 	// 选项
 	options := []string{
-		"🗑️  确认删除",
-		"❌ 取消",
+		t("confirm_delete_yes"),
+		t("confirm_delete_no"),
 	}
 
 	content.WriteString("\n\n")
@@ -385,29 +386,29 @@ func (m model) confirmDeleteView(serviceType string) string {
 	}
 
 	content.WriteString("\n")
-	content.WriteString(statusBarView("↑/↓/←/→ 选择", "Enter 确认", "Esc 取消", ""))
+	content.WriteString(statusBarView(t("confirm_nav"), t("nav_confirm"), t("confirm_nav_back"), ""))
 
 	return content.String()
 }
 
 // confirmExitAddView 显示退出添加配置确认对话框
 func (m model) confirmExitAddView(serviceType string) string {
-	title := headerView(fmt.Sprintf("退出添加 %s 配置", serviceType))
+	title := headerView(fmt.Sprintf(t("confirm_exit_title"), serviceType))
 
 	var content strings.Builder
 	content.WriteString(title)
 	content.WriteString("\n\n")
 
 	// 显示警告信息
-	warning := "⚠️  确定要退出吗？表单中已填写的内容将被清空。"
+	warning := t("confirm_exit_warn")
 	content.WriteString(errorStyle.Render(warning))
 	content.WriteString("\n\n")
-	content.WriteString("此操作无法撤销。")
+	content.WriteString(t("confirm_exit_msg"))
 
 	// 选项
 	options := []string{
-		"🚪 确认退出（清空内容）",
-		"❌ 取消（继续编辑）",
+		t("confirm_exit_yes"),
+		t("confirm_exit_no"),
 	}
 
 	content.WriteString("\n\n")
@@ -420,7 +421,7 @@ func (m model) confirmExitAddView(serviceType string) string {
 	}
 
 	content.WriteString("\n")
-	content.WriteString(statusBarView("↑/↓/←/→ 选择", "Enter 确认", "Esc 返回编辑", ""))
+	content.WriteString(statusBarView(t("confirm_nav"), t("nav_confirm"), t("confirm_nav_back"), ""))
 
 	return content.String()
 }

@@ -48,6 +48,7 @@ type Config struct {
 	Codex      []ServiceConfig `json:"codex"`
 	Droid      []DroidConfig   `json:"droid"`
 	Active     ActiveConfig    `json:"active"`
+	Language   string          `json:"language,omitempty"`
 }
 
 type ActiveConfig struct {
@@ -120,6 +121,8 @@ func (c *Config) Load() error {
 			c.Codex = []ServiceConfig{}
 			c.Droid = []DroidConfig{}
 			c.Active = ActiveConfig{ClaudeCode: -1, Codex: -1, Droid: -1}
+			c.Language = "zh"
+			SetLanguage(c.Language)
 
 			// Import existing configurations
 			c.importExistingConfigs()
@@ -143,6 +146,12 @@ func (c *Config) Load() error {
 	if c.Active.Codex >= len(c.Codex) {
 		c.Active.Codex = -1
 	}
+
+	// Initialize language setting
+	if c.Language == "" {
+		c.Language = "zh"
+	}
+	SetLanguage(c.Language)
 
 	return nil
 }
