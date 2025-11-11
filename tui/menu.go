@@ -61,6 +61,7 @@ type model struct {
 	sortedClaudeCode []ServiceConfig // 排序后的 Claude Code 配置列表
 	sortedCodex      []ServiceConfig // 排序后的 Codex 配置列表
 	sortedDroid      []DroidConfig   // 排序后的 Droid 配置列表
+	windowHeight     int             // 终端窗口高度
 }
 
 func (m model) hasFormContent() bool {

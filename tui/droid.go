@@ -11,26 +11,45 @@ func (m model) droidListView() string {
 	header := headerView(t("header_droid"))
 
 	var rows []string
+	hasWarning := false
 
-	// 显示排序后的配置
-	for i, cfg := range m.sortedDroid {
-		active := m.config.Active.Droid == findDroidConfigIndex(m.config.Droid, cfg)
-		r := droidListRowView(cfg, i == m.cursor, active, m.compact)
-		if i == m.cursor {
-			r = itemBoxSelStyle.Render(r)
-		} else {
-			r = itemBoxStyle.Render(r)
+	// Calculate viewport size based on window height
+	configCount := len(m.sortedDroid)
+	if configCount > 0 {
+		viewportSize := calculateListViewportHeight(m.windowHeight, hasWarning, m.compact)
+
+		// Calculate visible range based on cursor position
+		start, end := updateCursorViewport(m.cursor, configCount, viewportSize)
+
+		// Render visible configurations
+		for i := start; i < end; i++ {
+			cfg := m.sortedDroid[i]
+			active := m.config.Active.Droid == findDroidConfigIndex(m.config.Droid, cfg)
+			r := droidListRowView(cfg, i == m.cursor, active, m.compact)
+			if i == m.cursor {
+				r = itemBoxSelStyle.Render(r)
+			} else {
+				r = itemBoxStyle.Render(r)
+			}
+			rows = append(rows, r)
 		}
-		rows = append(rows, r)
+
+		// Add scroll indicators if needed
+		if start > 0 {
+			rows = append([]string{scrollIndicatorStyle.Render("↑ More items above")}, rows...)
+		}
+		if end < configCount {
+			rows = append(rows, scrollIndicatorStyle.Render("↓ More items below"))
+		}
 	}
-	{
-		backSel := m.cursor == len(m.config.Droid)
-		back := menuItemView(t("back_to_menu"), backSel)
-		if backSel {
-			rows = append(rows, itemBoxSelStyle.Render(back))
-		} else {
-			rows = append(rows, itemBoxStyle.Render(back))
-		}
+
+	// Add "Back to menu" option
+	backSel := m.cursor == len(m.config.Droid)
+	back := menuItemView(t("back_to_menu"), backSel)
+	if backSel {
+		rows = append(rows, itemBoxSelStyle.Render(back))
+	} else {
+		rows = append(rows, itemBoxStyle.Render(back))
 	}
 
 	body := lipgloss.JoinVertical(lipgloss.Left, rows...)
