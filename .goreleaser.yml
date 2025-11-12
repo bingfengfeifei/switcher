@@ -1,0 +1,150 @@
+# GoReleaser configuration for switcher
+# Documentation: https://goreleaser.com
+
+version: 2
+
+before:
+  hooks:
+    # Ensure dependencies are up to date
+    - go mod tidy
+    - go mod download
+
+builds:
+  - id: switcher
+    main: .
+    binary: switcher
+
+    # Build for multiple platforms
+    goos:
+      - linux
+      - darwin
+      - windows
+
+    goarch:
+      - amd64
+      - arm64
+
+    # Inject version information at build time
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+      - -X main.builtBy=goreleaser
+
+    env:
+      - CGO_ENABLED=0
+
+    # Ignore specific combinations if needed
+    ignore:
+      # Windows ARM64 support is still experimental for some Go versions
+      # Uncomment if you encounter issues:
+      # - goos: windows
+      #   goarch: arm64
+
+archives:
+  - id: switcher-archive
+    format_overrides:
+      # Use zip for Windows, tar.gz for others
+      - goos: windows
+        format: zip
+
+    # Archive name template
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+
+    # Files to include in the archive
+    files:
+      - LICENSE
+      - README*.md
+      - CLAUDE.md
+
+checksum:
+  name_template: 'checksums.txt'
+  algorithm: sha256
+
+snapshot:
+  # Snapshot version name for non-tagged builds
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  # Automatically generate changelog from git commits
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - 'merge conflict'
+      - Merge pull request
+      - Merge remote-tracking branch
+      - Merge branch
+  groups:
+    - title: 'New Features'
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: 'Bug Fixes'
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: 'Performance Improvements'
+      regexp: '^.*?perf(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: 'Refactors'
+      regexp: '^.*?refactor(\([[:word:]]+\))??!?:.+$'
+      order: 3
+    - title: 'Other Changes'
+      order: 999
+
+release:
+  # GitHub release configuration
+  github:
+    owner: bingfengfeifei
+    name: switcher
+
+  # Draft release (set to false for automatic publishing)
+  draft: false
+
+  # Mark as prerelease if version contains alpha, beta, rc
+  prerelease: auto
+
+  # Release name template
+  name_template: "{{.ProjectName}} v{{.Version}}"
+
+  # Footer for release notes
+  footer: |
+    ## Installation
+
+    Download the appropriate binary for your platform from the assets below.
+
+    ### Linux / macOS
+    ```bash
+    # Extract the archive
+    tar -xzf switcher_*_Linux_x86_64.tar.gz
+    # or for macOS
+    tar -xzf switcher_*_Darwin_x86_64.tar.gz
+
+    # Make it executable
+    chmod +x switcher
+
+    # Move to your PATH (optional)
+    sudo mv switcher /usr/local/bin/
+    ```
+
+    ### Windows
+    Extract the zip file and run `switcher.exe` from the command prompt.
+
+    ### Verify Installation
+    ```bash
+    switcher --version
+    ```
+
+    ---
+
+    **Full Changelog**: https://github.com/bingfengfeifei/switcher/compare/{{ .PreviousTag }}...{{ .Tag }}

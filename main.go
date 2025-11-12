@@ -10,15 +10,35 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+// Version information, set by GoReleaser at build time
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+	builtBy = "unknown"
+)
+
 func main() {
 	// Non-interactive switching support
 	var switchCodexName string
 	var switchClaudeName string
 	var switchDroidName string
+	var showVersion bool
 	flag.StringVar(&switchCodexName, "switch-codex", "", "Switch Codex to config by name")
 	flag.StringVar(&switchClaudeName, "switch-claude", "", "Switch Claude Code to config by name")
 	flag.StringVar(&switchDroidName, "switch-droid", "", "Switch Droid to config by name")
+	flag.BoolVar(&showVersion, "version", false, "Show version information")
+	flag.BoolVar(&showVersion, "v", false, "Show version information (shorthand)")
 	flag.Parse()
+
+	// Handle version flag
+	if showVersion {
+		fmt.Printf("switcher version %s\n", version)
+		fmt.Printf("  commit: %s\n", commit)
+		fmt.Printf("  built at: %s\n", date)
+		fmt.Printf("  built by: %s\n", builtBy)
+		return
+	}
 
 	config := &tui.Config{}
 	if err := config.Load(); err != nil {
