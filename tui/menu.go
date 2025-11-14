@@ -175,13 +175,13 @@ func (m model) addConfigView(serviceType string) string {
 	if serviceType == "Codex" {
 		// 设置默认值
 		if m.formData.Model == "" {
-			m.formData.Model = "gpt-5"
+			m.formData.Model = DefaultCodexModel
 		}
 		if m.formData.WireAPI == "" {
-			m.formData.WireAPI = "responses"
+			m.formData.WireAPI = DefaultWireAPI
 		}
 		if m.formData.ModelReasoningEffort == "" {
-			m.formData.ModelReasoningEffort = "medium"
+			m.formData.ModelReasoningEffort = DefaultModelReasoningEffort
 		}
 
 		fields = []struct {

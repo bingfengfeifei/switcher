@@ -8,6 +8,27 @@ import (
 	"strings"
 )
 
+// Default model constants
+const (
+	DefaultCodexModel  = "gpt-5.1-codex"
+	DefaultClaudeModel = "claude-sonnet-4-5-20250929"
+	DefaultDroidModel  = "gpt-5.1-codex"
+)
+
+// Default configuration constants
+const (
+	DefaultWireAPI              = "responses"
+	DefaultModelReasoningEffort = "medium"
+	DefaultEnvKey               = "CODEX_KEY"
+)
+
+// Model reasoning effort levels
+const (
+	ModelReasoningEffortLow    = "low"
+	ModelReasoningEffortMedium = "medium"
+	ModelReasoningEffortHigh   = "high"
+)
+
 var platformPaths PlatformPaths
 var shellManager ShellManager
 
@@ -252,19 +273,19 @@ func (c *Config) migrateCodexConfigs() {
 	for i := range c.Codex {
 		// Set default values for new fields if they are empty
 		if c.Codex[i].Model == "" {
-			c.Codex[i].Model = "gpt-5"
+			c.Codex[i].Model = DefaultCodexModel
 			migrated = true
 		}
 		if c.Codex[i].WireAPI == "" {
-			c.Codex[i].WireAPI = "responses"
+			c.Codex[i].WireAPI = DefaultWireAPI
 			migrated = true
 		}
 		if c.Codex[i].EnvKey == "" {
-			c.Codex[i].EnvKey = "CODEX_KEY"
+			c.Codex[i].EnvKey = DefaultEnvKey
 			migrated = true
 		}
 		if c.Codex[i].ModelReasoningEffort == "" {
-			c.Codex[i].ModelReasoningEffort = "medium"
+			c.Codex[i].ModelReasoningEffort = DefaultModelReasoningEffort
 			migrated = true
 		}
 	}
@@ -428,7 +449,7 @@ func (c *Config) SwitchCodex(config *ServiceConfig) error {
 	if model == "" {
 		model = existingConfig.Model
 		if model == "" {
-			model = "gpt-5"
+			model = DefaultCodexModel
 		}
 	}
 	existingConfig.Model = model
@@ -436,7 +457,7 @@ func (c *Config) SwitchCodex(config *ServiceConfig) error {
 	// Set wire_api if specified, otherwise use existing or default
 	wireAPI := config.WireAPI
 	if wireAPI == "" {
-		wireAPI = "responses"
+		wireAPI = DefaultWireAPI
 	}
 
 	// Set model_reasoning_effort if specified, otherwise use existing or default
@@ -444,7 +465,7 @@ func (c *Config) SwitchCodex(config *ServiceConfig) error {
 	if modelReasoningEffort == "" {
 		modelReasoningEffort = existingConfig.ModelReasoningEffort
 		if modelReasoningEffort == "" {
-			modelReasoningEffort = "medium"
+			modelReasoningEffort = DefaultModelReasoningEffort
 		}
 	}
 	existingConfig.ModelReasoningEffort = modelReasoningEffort
@@ -452,7 +473,7 @@ func (c *Config) SwitchCodex(config *ServiceConfig) error {
 	// Set env_key from config or use default
 	envKey := config.EnvKey
 	if envKey == "" {
-		envKey = "CODEX_KEY"
+		envKey = DefaultEnvKey
 	}
 
 	existingConfig.ModelProviders[providerName] = CodexProvider{
@@ -475,7 +496,7 @@ func (c *Config) SwitchCodex(config *ServiceConfig) error {
 	// Set environment variable in shell configurations
 	provider := existingConfig.ModelProviders[providerName]
 	if provider.EnvKey == "" {
-		provider.EnvKey = "CODEX_KEY"
+		provider.EnvKey = DefaultEnvKey
 	}
 	return shellManager.SetEnvVar(provider.EnvKey, config.APIKey)
 }
@@ -483,8 +504,8 @@ func (c *Config) SwitchCodex(config *ServiceConfig) error {
 func (c *Config) loadCodexConfig(path string) CodexConfig {
 	config := CodexConfig{
 		ModelProvider:          "openai",
-		Model:                  "gpt-4",
-		ModelReasoningEffort:   "medium",
+		Model:                  DefaultCodexModel,
+		ModelReasoningEffort:   DefaultModelReasoningEffort,
 		DisableResponseStorage: false,
 		ModelProviders:         make(map[string]CodexProvider),
 		Projects:               make(map[string]CodexProject),

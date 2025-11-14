@@ -202,17 +202,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor = 0 // 选择"确认删除"或"确认退出"
 			} else if (m.state == addCodex || m.state == editCodex) && m.formField == FieldWireAPI {
 				// Wire API字段：在chat和responses之间切换
-				if m.formData.WireAPI == "responses" {
+				if m.formData.WireAPI == DefaultWireAPI {
 					m.formData.WireAPI = "chat"
 				} else {
-					m.formData.WireAPI = "responses"
+					m.formData.WireAPI = DefaultWireAPI
 				}
 			} else if (m.state == addCodex || m.state == editCodex) && m.formField == FieldModelReasoningEffort {
 				// 推理强度字段：在low、medium、high之间切换
 				if m.formData.ModelReasoningEffort == "low" {
 					m.formData.ModelReasoningEffort = "high"
 				} else if m.formData.ModelReasoningEffort == "high" {
-					m.formData.ModelReasoningEffort = "medium"
+					m.formData.ModelReasoningEffort = DefaultModelReasoningEffort
 				} else {
 					m.formData.ModelReasoningEffort = "low"
 				}
@@ -232,19 +232,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor = 1 // 选择"取消"
 			} else if (m.state == addCodex || m.state == editCodex) && m.formField == FieldWireAPI {
 				// Wire API字段：在chat和responses之间切换
-				if m.formData.WireAPI == "responses" {
+				if m.formData.WireAPI == DefaultWireAPI {
 					m.formData.WireAPI = "chat"
 				} else {
-					m.formData.WireAPI = "responses"
+					m.formData.WireAPI = DefaultWireAPI
 				}
 			} else if (m.state == addCodex || m.state == editCodex) && m.formField == FieldModelReasoningEffort {
 				// 推理强度字段：在low、medium、high之间切换
-				if m.formData.ModelReasoningEffort == "low" {
-					m.formData.ModelReasoningEffort = "medium"
-				} else if m.formData.ModelReasoningEffort == "medium" {
-					m.formData.ModelReasoningEffort = "high"
+				if m.formData.ModelReasoningEffort == ModelReasoningEffortLow {
+					m.formData.ModelReasoningEffort = ModelReasoningEffortMedium
+				} else if m.formData.ModelReasoningEffort == ModelReasoningEffortMedium {
+					m.formData.ModelReasoningEffort = ModelReasoningEffortHigh
 				} else {
-					m.formData.ModelReasoningEffort = "low"
+					m.formData.ModelReasoningEffort = ModelReasoningEffortLow
 				}
 			}
 		case tea.KeyEnter:
@@ -266,12 +266,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.formData.Name != "" && m.formData.Provider != "" && m.formData.BaseURL != "" && m.formData.APIKey != "" {
 					// Set default values for Codex config
 					if m.formData.Model == "" {
-						m.formData.Model = "gpt-5"
+						m.formData.Model = DefaultCodexModel
 					}
 					if m.formData.WireAPI == "" {
-						m.formData.WireAPI = "responses"
+						m.formData.WireAPI = DefaultWireAPI
 					}
-					m.formData.EnvKey = "CODEX_KEY" // Always set to CODEX_KEY
+					m.formData.EnvKey = DefaultEnvKey // Always set to CODEX_KEY
 
 					if err := m.config.AddCodexConfig(m.formData); err != nil {
 						m.error = err.Error()
@@ -313,15 +313,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.formData.Name != "" && m.formData.Provider != "" && m.formData.BaseURL != "" && m.formData.APIKey != "" {
 					// Set default values for Codex config
 					if m.formData.Model == "" {
-						m.formData.Model = "gpt-5"
+						m.formData.Model = DefaultCodexModel
 					}
 					if m.formData.WireAPI == "" {
-						m.formData.WireAPI = "responses"
+						m.formData.WireAPI = DefaultWireAPI
 					}
 					if m.formData.ModelReasoningEffort == "" {
-						m.formData.ModelReasoningEffort = "medium"
+						m.formData.ModelReasoningEffort = DefaultModelReasoningEffort
 					}
-					m.formData.EnvKey = "CODEX_KEY" // Always set to CODEX_KEY
+					m.formData.EnvKey = DefaultEnvKey // Always set to CODEX_KEY
 
 					m.config.Codex[m.editIndex] = m.formData
 					err := m.config.Save()
@@ -443,15 +443,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.formData.Name != "" && m.formData.Provider != "" && m.formData.BaseURL != "" && m.formData.APIKey != "" {
 					// Set default values for Codex config
 					if m.formData.Model == "" {
-						m.formData.Model = "gpt-5"
+						m.formData.Model = DefaultCodexModel
 					}
 					if m.formData.WireAPI == "" {
-						m.formData.WireAPI = "responses"
+						m.formData.WireAPI = DefaultWireAPI
 					}
 					if m.formData.ModelReasoningEffort == "" {
-						m.formData.ModelReasoningEffort = "medium"
+						m.formData.ModelReasoningEffort = DefaultModelReasoningEffort
 					}
-					m.formData.EnvKey = "CODEX_KEY" // Always set to CODEX_KEY
+					m.formData.EnvKey = DefaultEnvKey // Always set to CODEX_KEY
 
 					m.config.Codex[m.editIndex] = m.formData
 					if err := m.config.Save(); err != nil {
@@ -468,12 +468,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.formData.Name != "" && m.formData.Provider != "" && m.formData.BaseURL != "" && m.formData.APIKey != "" {
 					// Set default values for Codex config
 					if m.formData.Model == "" {
-						m.formData.Model = "gpt-5"
+						m.formData.Model = DefaultCodexModel
 					}
 					if m.formData.WireAPI == "" {
-						m.formData.WireAPI = "responses"
+						m.formData.WireAPI = DefaultWireAPI
 					}
-					m.formData.EnvKey = "CODEX_KEY" // Always set to CODEX_KEY
+					m.formData.EnvKey = DefaultEnvKey // Always set to CODEX_KEY
 
 					if err := m.config.AddCodexConfig(m.formData); err != nil {
 						m.error = err.Error()
@@ -711,15 +711,15 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 			if m.formData.Name != "" && m.formData.Provider != "" && m.formData.BaseURL != "" && m.formData.APIKey != "" {
 				// Set default values for Codex config
 				if m.formData.Model == "" {
-					m.formData.Model = "gpt-5"
+					m.formData.Model = DefaultCodexModel
 				}
 				if m.formData.WireAPI == "" {
-					m.formData.WireAPI = "responses"
+					m.formData.WireAPI = DefaultWireAPI
 				}
 				if m.formData.ModelReasoningEffort == "" {
-					m.formData.ModelReasoningEffort = "medium"
+					m.formData.ModelReasoningEffort = DefaultModelReasoningEffort
 				}
-				m.formData.EnvKey = "CODEX_KEY" // Always set to CODEX_KEY
+				m.formData.EnvKey = DefaultEnvKey // Always set to CODEX_KEY
 
 				err := m.config.AddCodexConfig(m.formData)
 				if err != nil {
@@ -778,15 +778,15 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 			if m.formData.Name != "" && m.formData.Provider != "" && m.formData.BaseURL != "" && m.formData.APIKey != "" {
 				// Set default values for Codex config
 				if m.formData.Model == "" {
-					m.formData.Model = "gpt-5"
+					m.formData.Model = DefaultCodexModel
 				}
 				if m.formData.WireAPI == "" {
-					m.formData.WireAPI = "responses"
+					m.formData.WireAPI = DefaultWireAPI
 				}
 				if m.formData.ModelReasoningEffort == "" {
-					m.formData.ModelReasoningEffort = "medium"
+					m.formData.ModelReasoningEffort = DefaultModelReasoningEffort
 				}
-				m.formData.EnvKey = "CODEX_KEY" // Always set to CODEX_KEY
+				m.formData.EnvKey = DefaultEnvKey // Always set to CODEX_KEY
 
 				m.config.Codex[m.editIndex] = m.formData
 				err := m.config.Save()
