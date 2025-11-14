@@ -27,6 +27,7 @@ var (
 	dividerStyle        = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 	itemBoxStyle        = lipgloss.NewStyle().Border(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color("60")).Padding(0, 1).MarginBottom(0)
 	itemBoxSelStyle     = lipgloss.NewStyle().Border(lipgloss.DoubleBorder()).BorderForeground(lipgloss.Color("66")).Padding(0, 1).MarginBottom(0).Bold(true)
+	headerVersion       = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("8")).Padding(0, 1)
 )
 
 // Header and UI helpers
@@ -36,6 +37,27 @@ func headerView(title string) string {
 		headerTitle.Render(" "+title+" "),
 		headerLine.Render(" "+line),
 	)
+}
+
+// Header with version display
+func headerViewWithVersion(title, version string) string {
+	if version == "" {
+		return headerView(title)
+	}
+
+	// 创建标题和版本号
+	titlePart := headerTitle.Render(" " + title + " ")
+	versionPart := headerVersion.Render(" " + version + " ")
+
+	// 计算装饰线长度，使版本号右对齐
+	// 这里使用固定宽度布局，确保版本号在右侧
+	content := lipgloss.JoinHorizontal(lipgloss.Top,
+		titlePart,
+		" ",
+		versionPart,
+	)
+
+	return content
 }
 
 func statusBarView(seg1, seg2, seg3, seg4 string) string {

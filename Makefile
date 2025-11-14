@@ -7,7 +7,8 @@ BINARY ?= switcher
 INSTALL_DIR ?= /usr/bin
 
 # Version information (can be overridden)
-VERSION ?= dev
+# 默认使用最新的Git tag，如果没有tag则使用git describe格式，如果连git都没有则使用dev
+VERSION ?= $(shell git describe --tags --always 2>/dev/null || echo "dev")
 COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 DATE ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 BUILT_BY ?= make

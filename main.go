@@ -18,6 +18,11 @@ var (
 	builtBy = "unknown"
 )
 
+func init() {
+	// 设置版本信息到tui包
+	tui.AppVersion = version
+}
+
 func main() {
 	// Non-interactive switching support
 	var switchCodexName string

@@ -119,7 +119,8 @@ func (m model) View() string {
 }
 
 func (m model) mainMenuView() string {
-	title := headerView(t("app_title"))
+	version := GetVersion()
+	title := headerViewWithVersion(t("app_title"), version)
 
 	activeClaude := t("none")
 	if active := m.config.GetActiveClaudeCode(); active != nil {

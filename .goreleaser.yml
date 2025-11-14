@@ -27,7 +27,7 @@ builds:
     # Inject version information at build time
     ldflags:
       - -s -w
-      - -X main.version={{.Version}}
+      - -X main.version={{.Tag}}      # 使用Tag保持v前缀格式
       - -X main.commit={{.Commit}}
       - -X main.date={{.Date}}
       - -X main.builtBy=goreleaser
