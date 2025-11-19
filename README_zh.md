@@ -184,7 +184,7 @@ switcher -switch-droid "配置名称"
 
 ## 🛠️ 配置结构
 
-每个服务配置包含：
+### Claude Code 和 Droid
 
 ```json
 {
@@ -194,6 +194,25 @@ switcher -switch-droid "配置名称"
   "api_key": "sk-..."
 }
 ```
+
+### Codex（支持认证方式选择）
+
+```json
+{
+  "name": "我的 Codex 配置",
+  "provider": "openai",
+  "base_url": "https://api.openai.com/v1",
+  "api_key": "sk-...",
+  "model": "gpt-5.1-codex",
+  "wire_api": "responses",
+  "auth_method": "auth.json",
+  "model_reasoning_effort": "medium"
+}
+```
+
+**Codex 认证方式：**
+- **`auth.json`**（默认）- 使用 `~/.codex/auth.json` 文件进行身份验证
+- **`env`** - 使用环境变量 `CODEX_KEY`（自动设置到 shell 配置文件中）
 
 ## 🎯 支持的提供商
 

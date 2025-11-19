@@ -184,7 +184,7 @@ switcher -switch-droid "Configuration Name"
 
 ## 🛠️ Configuration Structure
 
-Each service configuration contains:
+### Claude Code & Droid
 
 ```json
 {
@@ -194,6 +194,25 @@ Each service configuration contains:
   "api_key": "sk-..."
 }
 ```
+
+### Codex (with Authentication Method)
+
+```json
+{
+  "name": "My Codex Config",
+  "provider": "openai",
+  "base_url": "https://api.openai.com/v1",
+  "api_key": "sk-...",
+  "model": "gpt-5.1-codex",
+  "wire_api": "responses",
+  "auth_method": "auth.json",
+  "model_reasoning_effort": "medium"
+}
+```
+
+**Codex Authentication Methods:**
+- **`auth.json`** (default) - Uses `~/.codex/auth.json` file for authentication
+- **`env`** - Uses environment variable `CODEX_KEY` (automatically set in shell config)
 
 ## 🎯 Supported Providers
 

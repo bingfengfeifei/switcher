@@ -48,6 +48,7 @@ type ServiceConfig struct {
 	APIKey               string `json:"api_key"`
 	Model                string `json:"model,omitempty"`
 	WireAPI              string `json:"wire_api,omitempty"`
+	AuthMethod           string `json:"auth_method,omitempty"`
 	EnvKey               string `json:"env_key,omitempty"`
 	ModelReasoningEffort string `json:"model_reasoning_effort,omitempty"`
 }
@@ -280,6 +281,10 @@ func (c *Config) migrateCodexConfigs() {
 			c.Codex[i].WireAPI = DefaultWireAPI
 			migrated = true
 		}
+		if c.Codex[i].AuthMethod == "" {
+			c.Codex[i].AuthMethod = "auth.json"
+			migrated = true
+		}
 		if c.Codex[i].EnvKey == "" {
 			c.Codex[i].EnvKey = DefaultEnvKey
 			migrated = true
@@ -493,12 +498,21 @@ func (c *Config) SwitchCodex(config *ServiceConfig) error {
 		return err
 	}
 
-	// Set environment variable in shell configurations
-	provider := existingConfig.ModelProviders[providerName]
-	if provider.EnvKey == "" {
-		provider.EnvKey = DefaultEnvKey
+	// Set environment variable in shell configurations based on AuthMethod
+	authMethod := config.AuthMethod
+	if authMethod == "" {
+		authMethod = "auth.json"
 	}
-	return shellManager.SetEnvVar(provider.EnvKey, config.APIKey)
+
+	if authMethod == "env" {
+		provider := existingConfig.ModelProviders[providerName]
+		if provider.EnvKey == "" {
+			provider.EnvKey = DefaultEnvKey
+		}
+		return shellManager.SetEnvVar(provider.EnvKey, config.APIKey)
+	}
+
+	return nil
 }
 
 func (c *Config) loadCodexConfig(path string) CodexConfig {

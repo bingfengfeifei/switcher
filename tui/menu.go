@@ -13,13 +13,14 @@ const (
 	FieldAPIKey
 	FieldModel
 	FieldWireAPI
+	FieldAuthMethod
 	FieldModelReasoningEffort
 )
 
 // 配置类型字段数量
 const (
 	ClaudeCodeFieldCount = 4
-	CodexFieldCount      = 7
+	CodexFieldCount      = 8
 	DroidFieldCount      = 4
 )
 
@@ -181,6 +182,9 @@ func (m model) addConfigView(serviceType string) string {
 		if m.formData.WireAPI == "" {
 			m.formData.WireAPI = DefaultWireAPI
 		}
+		if m.formData.AuthMethod == "" {
+			m.formData.AuthMethod = "auth.json"
+		}
 		if m.formData.ModelReasoningEffort == "" {
 			m.formData.ModelReasoningEffort = DefaultModelReasoningEffort
 		}
@@ -195,6 +199,7 @@ func (m model) addConfigView(serviceType string) string {
 			{t("field_api_key"), m.formData.APIKey},
 			{t("field_model"), m.formData.Model},
 			{t("field_wire_api"), m.formData.WireAPI},
+			{t("field_auth_method"), m.formData.AuthMethod},
 			{t("field_reasoning"), m.formData.ModelReasoningEffort},
 		}
 	} else {
@@ -276,6 +281,7 @@ func (m model) editConfigView(serviceType string) string {
 			{t("field_api_key"), m.formData.APIKey},
 			{t("field_model"), m.formData.Model},
 			{t("field_wire_api"), m.formData.WireAPI},
+			{t("field_auth_method"), m.formData.AuthMethod},
 			{t("field_reasoning"), m.formData.ModelReasoningEffort},
 		}
 	} else {

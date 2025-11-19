@@ -207,6 +207,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				} else {
 					m.formData.WireAPI = DefaultWireAPI
 				}
+			} else if (m.state == addCodex || m.state == editCodex) && m.formField == FieldAuthMethod {
+				// 认证方式字段：在auth.json和env之间切换
+				if m.formData.AuthMethod == "auth.json" {
+					m.formData.AuthMethod = "env"
+				} else {
+					m.formData.AuthMethod = "auth.json"
+				}
 			} else if (m.state == addCodex || m.state == editCodex) && m.formField == FieldModelReasoningEffort {
 				// 推理强度字段：在low、medium、high之间切换
 				if m.formData.ModelReasoningEffort == "low" {
@@ -236,6 +243,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.formData.WireAPI = "chat"
 				} else {
 					m.formData.WireAPI = DefaultWireAPI
+				}
+			} else if (m.state == addCodex || m.state == editCodex) && m.formField == FieldAuthMethod {
+				// 认证方式字段：在auth.json和env之间切换
+				if m.formData.AuthMethod == "auth.json" {
+					m.formData.AuthMethod = "env"
+				} else {
+					m.formData.AuthMethod = "auth.json"
 				}
 			} else if (m.state == addCodex || m.state == editCodex) && m.formField == FieldModelReasoningEffort {
 				// 推理强度字段：在low、medium、high之间切换
@@ -270,6 +284,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					if m.formData.WireAPI == "" {
 						m.formData.WireAPI = DefaultWireAPI
+					}
+					if m.formData.AuthMethod == "" {
+						m.formData.AuthMethod = "auth.json"
 					}
 					m.formData.EnvKey = DefaultEnvKey // Always set to CODEX_KEY
 
@@ -472,6 +489,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					if m.formData.WireAPI == "" {
 						m.formData.WireAPI = DefaultWireAPI
+					}
+					if m.formData.AuthMethod == "" {
+						m.formData.AuthMethod = "auth.json"
 					}
 					m.formData.EnvKey = DefaultEnvKey // Always set to CODEX_KEY
 
