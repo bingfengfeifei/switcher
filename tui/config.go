@@ -285,8 +285,14 @@ func (c *Config) migrateCodexConfigs() {
 			c.Codex[i].AuthMethod = "auth.json"
 			migrated = true
 		}
-		if c.Codex[i].EnvKey == "" {
+		// Only set EnvKey for env auth method
+		if c.Codex[i].AuthMethod == "env" && c.Codex[i].EnvKey == "" {
 			c.Codex[i].EnvKey = DefaultEnvKey
+			migrated = true
+		}
+		// Remove EnvKey for auth.json method
+		if c.Codex[i].AuthMethod == "auth.json" && c.Codex[i].EnvKey != "" {
+			c.Codex[i].EnvKey = ""
 			migrated = true
 		}
 		if c.Codex[i].ModelReasoningEffort == "" {
@@ -475,10 +481,13 @@ func (c *Config) SwitchCodex(config *ServiceConfig) error {
 	}
 	existingConfig.ModelReasoningEffort = modelReasoningEffort
 
-	// Set env_key from config or use default
-	envKey := config.EnvKey
-	if envKey == "" {
-		envKey = DefaultEnvKey
+	// Set env_key only for env auth method
+	envKey := ""
+	if config.AuthMethod == "env" {
+		envKey = config.EnvKey
+		if envKey == "" {
+			envKey = DefaultEnvKey
+		}
 	}
 
 	existingConfig.ModelProviders[providerName] = CodexProvider{

@@ -288,7 +288,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if m.formData.AuthMethod == "" {
 						m.formData.AuthMethod = "auth.json"
 					}
-					m.formData.EnvKey = DefaultEnvKey // Always set to CODEX_KEY
+					// Only set EnvKey for env auth method
+					if m.formData.AuthMethod == "env" {
+						m.formData.EnvKey = DefaultEnvKey
+					} else {
+						m.formData.EnvKey = ""
+					}
 
 					if err := m.config.AddCodexConfig(m.formData); err != nil {
 						m.error = err.Error()
@@ -338,7 +343,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if m.formData.ModelReasoningEffort == "" {
 						m.formData.ModelReasoningEffort = DefaultModelReasoningEffort
 					}
-					m.formData.EnvKey = DefaultEnvKey // Always set to CODEX_KEY
+					// Only set EnvKey for env auth method
+					if m.formData.AuthMethod == "env" {
+						m.formData.EnvKey = DefaultEnvKey
+					} else {
+						m.formData.EnvKey = ""
+					}
 
 					m.config.Codex[m.editIndex] = m.formData
 					err := m.config.Save()
@@ -468,7 +478,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if m.formData.ModelReasoningEffort == "" {
 						m.formData.ModelReasoningEffort = DefaultModelReasoningEffort
 					}
-					m.formData.EnvKey = DefaultEnvKey // Always set to CODEX_KEY
+					// Only set EnvKey for env auth method
+					if m.formData.AuthMethod == "env" {
+						m.formData.EnvKey = DefaultEnvKey
+					} else {
+						m.formData.EnvKey = ""
+					}
 
 					m.config.Codex[m.editIndex] = m.formData
 					if err := m.config.Save(); err != nil {
@@ -493,7 +508,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if m.formData.AuthMethod == "" {
 						m.formData.AuthMethod = "auth.json"
 					}
-					m.formData.EnvKey = DefaultEnvKey // Always set to CODEX_KEY
+					// Only set EnvKey for env auth method
+					if m.formData.AuthMethod == "env" {
+						m.formData.EnvKey = DefaultEnvKey
+					} else {
+						m.formData.EnvKey = ""
+					}
 
 					if err := m.config.AddCodexConfig(m.formData); err != nil {
 						m.error = err.Error()
@@ -806,7 +826,12 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 				if m.formData.ModelReasoningEffort == "" {
 					m.formData.ModelReasoningEffort = DefaultModelReasoningEffort
 				}
-				m.formData.EnvKey = DefaultEnvKey // Always set to CODEX_KEY
+				// Only set EnvKey for env auth method
+				if m.formData.AuthMethod == "env" {
+					m.formData.EnvKey = DefaultEnvKey
+				} else {
+					m.formData.EnvKey = ""
+				}
 
 				m.config.Codex[m.editIndex] = m.formData
 				err := m.config.Save()
