@@ -619,9 +619,14 @@ disable_response_storage = %t
 name = "%s"
 base_url = "%s"
 wire_api = "%s"
-env_key = "%s"
-requires_openai_auth = %t
-`, name, provider.Name, provider.BaseURL, provider.WireAPI, provider.EnvKey, provider.RequiresOpenAIAuth)
+`, name, provider.Name, provider.BaseURL, provider.WireAPI)
+		// Only add env_key if it's not empty
+		if provider.EnvKey != "" {
+			toml += fmt.Sprintf(`env_key = "%s"
+`, provider.EnvKey)
+		}
+		toml += fmt.Sprintf(`requires_openai_auth = %t
+`, provider.RequiresOpenAIAuth)
 	}
 
 	for path, project := range config.Projects {
