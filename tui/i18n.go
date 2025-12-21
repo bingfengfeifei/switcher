@@ -48,8 +48,9 @@ var translations = map[string]map[string]string{
 		"field_wire_api":      "Wire API",
 		"field_auth_method":   "认证方式",
 		"field_reasoning":     "推理强度",
-		"field_display_name":  "模型显示名称",
-		"field_model_name":    "模型名称",
+		"field_display_name":      "模型显示名称",
+		"field_model_name":        "模型名称",
+		"field_claude_default_model": "默认模型",
 
 		// Form hints
 		"hint_select":         "(←/→选择)",
@@ -169,8 +170,9 @@ var translations = map[string]map[string]string{
 		"field_wire_api":      "Wire API",
 		"field_auth_method":   "Auth Method",
 		"field_reasoning":     "Reasoning Effort",
-		"field_display_name":  "Model Display Name",
-		"field_model_name":    "Model Name",
+		"field_display_name":      "Model Display Name",
+		"field_model_name":        "Model Name",
+		"field_claude_default_model": "Default Model",
 
 		// Form hints
 		"hint_select":         "(←/→ select)",

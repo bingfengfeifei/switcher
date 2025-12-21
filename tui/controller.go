@@ -79,8 +79,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case tea.KeyUp:
-			if m.state == addClaudeCode || m.state == editClaudeCode || m.state == addDroid || m.state == editDroid {
-				// Claude Code 和 Droid: 4个字段，在字段之间导航
+			if m.state == addClaudeCode || m.state == editClaudeCode {
+				// Claude Code: 5个字段，在字段之间导航
+				if m.cursor > ClaudeCodeFieldCount-1 {
+					m.cursor = ClaudeCodeFieldCount - 1
+					m.formField = m.cursor
+				} else if m.cursor >= 0 {
+					// 在字段之间移动，确保cursor和formField同步
+					m.cursor--
+					m.formField = m.cursor
+				} else {
+					// 从第一个字段循环到最后一个字段
+					m.cursor = ClaudeCodeFieldCount - 1
+					m.formField = m.cursor
+				}
+			} else if m.state == addDroid || m.state == editDroid {
+				// Droid: 4个字段，在字段之间导航
 				if m.cursor > DroidFieldCount-1 {
 					m.cursor = DroidFieldCount - 1
 					m.formField = m.cursor
@@ -114,8 +128,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor--
 			}
 		case tea.KeyDown:
-			if m.state == addClaudeCode || m.state == editClaudeCode || m.state == addDroid || m.state == editDroid {
-				// Claude Code 和 Droid: 4个字段，只在字段之间导航
+			if m.state == addClaudeCode || m.state == editClaudeCode {
+				// Claude Code: 5个字段，只在字段之间导航
+				if m.cursor < ClaudeCodeFieldCount-1 {
+					// 在字段之间切换时，更新formField为当前位置
+					m.formField = m.cursor + 1
+					m.cursor++
+				} else {
+					// 从最后一个字段回到第一个字段
+					m.cursor = 0
+					m.formField = 0
+				}
+			} else if m.state == addDroid || m.state == editDroid {
+				// Droid: 4个字段，只在字段之间导航
 				if m.cursor < DroidFieldCount-1 {
 					// 在字段之间切换时，更新formField为当前位置
 					m.formField = m.cursor + 1
@@ -171,7 +196,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.state = addClaudeCode
 					m.formData = ServiceConfig{}
 					m.formField = 0
-					m.cursor = 4
+					m.cursor = ClaudeCodeFieldCount
 					m.error = ""
 				} else if m.state == codexList {
 					m.state = addCodex
@@ -609,7 +634,9 @@ func (m model) getMaxCursor() int {
 	case droidList:
 		return len(m.sortedDroid) // 返回排序后的配置数量
 	// 操作菜单已移除，保存/取消按钮已移除
-	case addClaudeCode, editClaudeCode, addDroid, editDroid:
+	case addClaudeCode, editClaudeCode:
+		return ClaudeCodeFieldCount - 1 // 字段 0..4
+	case addDroid, editDroid:
 		return DroidFieldCount - 1 // 字段 0..3
 	case addCodex, editCodex:
 		return CodexFieldCount - 1 // 字段 0..5
@@ -729,7 +756,7 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 		}
 	// 操作菜单已移除
 	case addClaudeCode:
-		if m.cursor == 4 {
+		if m.cursor == ClaudeCodeFieldCount {
 			if m.formData.Name != "" && m.formData.Provider != "" && m.formData.BaseURL != "" && m.formData.APIKey != "" {
 				err := m.config.AddClaudeCodeConfig(m.formData)
 				if err != nil {
@@ -742,7 +769,7 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 			} else {
 				m.error = "⚠️ 请填写所有字段"
 			}
-		} else if m.cursor == 5 {
+		} else if m.cursor == ClaudeCodeFieldCount+1 {
 			m.state = mainMenu
 			m.cursor = 0
 		}
@@ -941,7 +968,7 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 		} else {
 			// 取消退出，返回到表单
 			m.state = addClaudeCode
-			m.cursor = 4
+			m.cursor = ClaudeCodeFieldCount
 		}
 	case confirmExitAddCodex:
 		if m.cursor == 0 {
@@ -992,7 +1019,24 @@ func (m model) handleInput(char string) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	// Handle Claude Code and Codex form inputs
+	// Handle Claude Code form inputs
+	if m.state == addClaudeCode || m.state == editClaudeCode {
+		switch m.formField {
+		case 0:
+			m.formData.Name += s
+		case 1:
+			m.formData.Provider += s
+		case 2:
+			m.formData.BaseURL += s
+		case 3:
+			m.formData.APIKey += s
+		case 4:
+			m.formData.ClaudeDefaultModel += s
+		}
+		return m, nil
+	}
+
+	// Handle Codex form inputs
 	switch m.formField {
 	case 0:
 		m.formData.Name += s
@@ -1040,7 +1084,39 @@ func (m model) handleBackspace() (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	// Handle Claude Code and Codex form backspace
+	// Handle Claude Code form backspace
+	if m.state == addClaudeCode || m.state == editClaudeCode {
+		switch m.formField {
+		case 0:
+			if len(m.formData.Name) > 0 {
+				r := []rune(m.formData.Name)
+				m.formData.Name = string(r[:len(r)-1])
+			}
+		case 1:
+			if len(m.formData.Provider) > 0 {
+				r := []rune(m.formData.Provider)
+				m.formData.Provider = string(r[:len(r)-1])
+			}
+		case 2:
+			if len(m.formData.BaseURL) > 0 {
+				r := []rune(m.formData.BaseURL)
+				m.formData.BaseURL = string(r[:len(r)-1])
+			}
+		case 3:
+			if len(m.formData.APIKey) > 0 {
+				r := []rune(m.formData.APIKey)
+				m.formData.APIKey = string(r[:len(r)-1])
+			}
+		case 4:
+			if len(m.formData.ClaudeDefaultModel) > 0 {
+				r := []rune(m.formData.ClaudeDefaultModel)
+				m.formData.ClaudeDefaultModel = string(r[:len(r)-1])
+			}
+		}
+		return m, nil
+	}
+
+	// Handle Codex form backspace
 	switch m.formField {
 	case 0:
 		if len(m.formData.Name) > 0 {

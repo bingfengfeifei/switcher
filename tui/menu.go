@@ -15,11 +15,12 @@ const (
 	FieldWireAPI
 	FieldAuthMethod
 	FieldModelReasoningEffort
+	FieldClaudeDefaultModel
 )
 
 // 配置类型字段数量
 const (
-	ClaudeCodeFieldCount = 4
+	ClaudeCodeFieldCount = 5
 	CodexFieldCount      = 8
 	DroidFieldCount      = 4
 )
@@ -66,7 +67,7 @@ type model struct {
 }
 
 func (m model) hasFormContent() bool {
-	return m.formData.Name != "" || m.formData.Provider != "" || m.formData.BaseURL != "" || m.formData.APIKey != "" || m.formData.Model != "" || m.formData.WireAPI != "" || m.formData.EnvKey != "" || m.formData.ModelReasoningEffort != ""
+	return m.formData.Name != "" || m.formData.Provider != "" || m.formData.BaseURL != "" || m.formData.APIKey != "" || m.formData.Model != "" || m.formData.WireAPI != "" || m.formData.EnvKey != "" || m.formData.ModelReasoningEffort != "" || m.formData.ClaudeDefaultModel != ""
 }
 
 func (m model) hasDroidFormContent() bool {
@@ -211,6 +212,7 @@ func (m model) addConfigView(serviceType string) string {
 			{t("field_provider"), m.formData.Provider},
 			{t("field_base_url"), m.formData.BaseURL},
 			{t("field_api_key"), m.formData.APIKey},
+			{t("field_claude_default_model"), m.formData.ClaudeDefaultModel},
 		}
 	}
 
@@ -293,6 +295,7 @@ func (m model) editConfigView(serviceType string) string {
 			{t("field_provider"), m.formData.Provider},
 			{t("field_base_url"), m.formData.BaseURL},
 			{t("field_api_key"), m.formData.APIKey},
+			{t("field_claude_default_model"), m.formData.ClaudeDefaultModel},
 		}
 	}
 

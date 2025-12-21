@@ -42,15 +42,16 @@ func init() {
 }
 
 type ServiceConfig struct {
-	Name                 string `json:"name"`
-	Provider             string `json:"provider"`
-	BaseURL              string `json:"base_url"`
-	APIKey               string `json:"api_key"`
-	Model                string `json:"model,omitempty"`
-	WireAPI              string `json:"wire_api,omitempty"`
-	AuthMethod           string `json:"auth_method,omitempty"`
-	EnvKey               string `json:"env_key,omitempty"`
-	ModelReasoningEffort string `json:"model_reasoning_effort,omitempty"`
+	Name                  string `json:"name"`
+	Provider              string `json:"provider"`
+	BaseURL               string `json:"base_url"`
+	APIKey                string `json:"api_key"`
+	Model                 string `json:"model,omitempty"`
+	WireAPI               string `json:"wire_api,omitempty"`
+	AuthMethod            string `json:"auth_method,omitempty"`
+	EnvKey                string `json:"env_key,omitempty"`
+	ModelReasoningEffort  string `json:"model_reasoning_effort,omitempty"`
+	ClaudeDefaultModel    string `json:"claude_default_model,omitempty"`
 }
 
 type DroidConfig struct {
@@ -404,6 +405,13 @@ func (c *Config) SwitchClaudeCode(config *ServiceConfig) error {
 			Deny:  []string{},
 		},
 		AlwaysThinkingEnabled: false,
+	}
+
+	// 如果设置了默认模型，添加三个环境变量
+	if config.ClaudeDefaultModel != "" {
+		settings.Env["ANTHROPIC_DEFAULT_OPUS_MODEL"] = config.ClaudeDefaultModel
+		settings.Env["ANTHROPIC_DEFAULT_SONNET_MODEL"] = config.ClaudeDefaultModel
+		settings.Env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = config.ClaudeDefaultModel
 	}
 
 	data, err := json.MarshalIndent(settings, "", "  ")
