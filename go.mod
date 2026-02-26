@@ -1,4 +1,4 @@
-module switcher
+module github.com/bingfengfeifei/switcher
 
 go 1.24.0
 
