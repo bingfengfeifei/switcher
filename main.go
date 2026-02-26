@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	tui "switcher/tui"
+	tui "github.com/bingfengfeifei/switcher/tui"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
