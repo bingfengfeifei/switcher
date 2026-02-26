@@ -1031,7 +1031,11 @@ func (m model) handleInput(char string) (tea.Model, tea.Cmd) {
 		case 3:
 			m.formData.APIKey += s
 		case 4:
-			m.formData.ClaudeDefaultModel += s
+			m.formData.ClaudeDefaultHaikuModel += s
+		case 5:
+			m.formData.ClaudeDefaultOpusModel += s
+		case 6:
+			m.formData.ClaudeDefaultSonnetModel += s
 		}
 		return m, nil
 	}
@@ -1108,9 +1112,19 @@ func (m model) handleBackspace() (tea.Model, tea.Cmd) {
 				m.formData.APIKey = string(r[:len(r)-1])
 			}
 		case 4:
-			if len(m.formData.ClaudeDefaultModel) > 0 {
-				r := []rune(m.formData.ClaudeDefaultModel)
-				m.formData.ClaudeDefaultModel = string(r[:len(r)-1])
+			if len(m.formData.ClaudeDefaultHaikuModel) > 0 {
+				r := []rune(m.formData.ClaudeDefaultHaikuModel)
+				m.formData.ClaudeDefaultHaikuModel = string(r[:len(r)-1])
+			}
+		case 5:
+			if len(m.formData.ClaudeDefaultOpusModel) > 0 {
+				r := []rune(m.formData.ClaudeDefaultOpusModel)
+				m.formData.ClaudeDefaultOpusModel = string(r[:len(r)-1])
+			}
+		case 6:
+			if len(m.formData.ClaudeDefaultSonnetModel) > 0 {
+				r := []rune(m.formData.ClaudeDefaultSonnetModel)
+				m.formData.ClaudeDefaultSonnetModel = string(r[:len(r)-1])
 			}
 		}
 		return m, nil

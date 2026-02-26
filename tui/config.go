@@ -42,16 +42,19 @@ func init() {
 }
 
 type ServiceConfig struct {
-	Name                  string `json:"name"`
-	Provider              string `json:"provider"`
-	BaseURL               string `json:"base_url"`
-	APIKey                string `json:"api_key"`
-	Model                 string `json:"model,omitempty"`
-	WireAPI               string `json:"wire_api,omitempty"`
-	AuthMethod            string `json:"auth_method,omitempty"`
-	EnvKey                string `json:"env_key,omitempty"`
-	ModelReasoningEffort  string `json:"model_reasoning_effort,omitempty"`
-	ClaudeDefaultModel    string `json:"claude_default_model,omitempty"`
+	Name                   string `json:"name"`
+	Provider               string `json:"provider"`
+	BaseURL                string `json:"base_url"`
+	APIKey                 string `json:"api_key"`
+	Model                  string `json:"model,omitempty"`
+	WireAPI                string `json:"wire_api,omitempty"`
+	AuthMethod             string `json:"auth_method,omitempty"`
+	EnvKey                 string `json:"env_key,omitempty"`
+	ModelReasoningEffort   string `json:"model_reasoning_effort,omitempty"`
+	ClaudeDefaultModel     string `json:"claude_default_model,omitempty"`
+	ClaudeDefaultHaikuModel  string `json:"claude_default_haiku_model,omitempty"`
+	ClaudeDefaultOpusModel  string `json:"claude_default_opus_model,omitempty"`
+	ClaudeDefaultSonnetModel string `json:"claude_default_sonnet_model,omitempty"`
 }
 
 type DroidConfig struct {
@@ -161,6 +164,7 @@ func (c *Config) Load() error {
 
 	// Migrate old configurations
 	c.migrateCodexConfigs()
+	c.migrateClaudeConfigs()
 
 	// Validate active indices
 	if c.Active.ClaudeCode >= len(c.ClaudeCode) {
@@ -197,6 +201,16 @@ func (c *Config) importExistingConfigs() {
 						Provider: "Current",
 						BaseURL:  baseURL,
 						APIKey:   authToken,
+					}
+					// Import default model settings if they exist
+					if haikuModel, exists := settings.Env["ANTHROPIC_DEFAULT_HAIKU_MODEL"]; exists {
+						claudeConfig.ClaudeDefaultHaikuModel = haikuModel
+					}
+					if opusModel, exists := settings.Env["ANTHROPIC_DEFAULT_OPUS_MODEL"]; exists {
+						claudeConfig.ClaudeDefaultOpusModel = opusModel
+					}
+					if sonnetModel, exists := settings.Env["ANTHROPIC_DEFAULT_SONNET_MODEL"]; exists {
+						claudeConfig.ClaudeDefaultSonnetModel = sonnetModel
 					}
 					c.ClaudeCode = append(c.ClaudeCode, claudeConfig)
 					c.Active.ClaudeCode = 0
@@ -308,6 +322,28 @@ func (c *Config) migrateCodexConfigs() {
 	}
 }
 
+// migrateClaudeConfigs migrates old Claude configurations to new format with separate model fields
+func (c *Config) migrateClaudeConfigs() {
+	migrated := false
+	for i := range c.ClaudeCode {
+		// If old ClaudeDefaultModel exists and new fields are empty, migrate
+		if c.ClaudeCode[i].ClaudeDefaultModel != "" {
+			if c.ClaudeCode[i].ClaudeDefaultHaikuModel == "" && c.ClaudeCode[i].ClaudeDefaultOpusModel == "" && c.ClaudeCode[i].ClaudeDefaultSonnetModel == "" {
+				c.ClaudeCode[i].ClaudeDefaultHaikuModel = c.ClaudeCode[i].ClaudeDefaultModel
+				c.ClaudeCode[i].ClaudeDefaultOpusModel = c.ClaudeCode[i].ClaudeDefaultModel
+				c.ClaudeCode[i].ClaudeDefaultSonnetModel = c.ClaudeCode[i].ClaudeDefaultModel
+				c.ClaudeCode[i].ClaudeDefaultModel = "" // Clear old field
+				migrated = true
+			}
+		}
+	}
+
+	// Save if any migrations were applied
+	if migrated {
+		c.Save()
+	}
+}
+
 func (c *Config) AddClaudeCodeConfig(config ServiceConfig) error {
 	c.ClaudeCode = append(c.ClaudeCode, config)
 	return c.Save()
@@ -407,11 +443,15 @@ func (c *Config) SwitchClaudeCode(config *ServiceConfig) error {
 		AlwaysThinkingEnabled: false,
 	}
 
-	// 如果设置了默认模型，添加三个环境变量
-	if config.ClaudeDefaultModel != "" {
-		settings.Env["ANTHROPIC_DEFAULT_OPUS_MODEL"] = config.ClaudeDefaultModel
-		settings.Env["ANTHROPIC_DEFAULT_SONNET_MODEL"] = config.ClaudeDefaultModel
-		settings.Env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = config.ClaudeDefaultModel
+	// 设置默认模型环境变量
+	if config.ClaudeDefaultHaikuModel != "" {
+		settings.Env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = config.ClaudeDefaultHaikuModel
+	}
+	if config.ClaudeDefaultOpusModel != "" {
+		settings.Env["ANTHROPIC_DEFAULT_OPUS_MODEL"] = config.ClaudeDefaultOpusModel
+	}
+	if config.ClaudeDefaultSonnetModel != "" {
+		settings.Env["ANTHROPIC_DEFAULT_SONNET_MODEL"] = config.ClaudeDefaultSonnetModel
 	}
 
 	data, err := json.MarshalIndent(settings, "", "  ")

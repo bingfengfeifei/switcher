@@ -15,12 +15,14 @@ const (
 	FieldWireAPI
 	FieldAuthMethod
 	FieldModelReasoningEffort
-	FieldClaudeDefaultModel
+	FieldClaudeDefaultHaikuModel
+	FieldClaudeDefaultOpusModel
+	FieldClaudeDefaultSonnetModel
 )
 
 // 配置类型字段数量
 const (
-	ClaudeCodeFieldCount = 5
+	ClaudeCodeFieldCount = 7 // Name, Provider, BaseURL, APIKey, HaikuModel, OpusModel, SonnetModel
 	CodexFieldCount      = 8
 	DroidFieldCount      = 4
 )
@@ -67,7 +69,7 @@ type model struct {
 }
 
 func (m model) hasFormContent() bool {
-	return m.formData.Name != "" || m.formData.Provider != "" || m.formData.BaseURL != "" || m.formData.APIKey != "" || m.formData.Model != "" || m.formData.WireAPI != "" || m.formData.EnvKey != "" || m.formData.ModelReasoningEffort != "" || m.formData.ClaudeDefaultModel != ""
+	return m.formData.Name != "" || m.formData.Provider != "" || m.formData.BaseURL != "" || m.formData.APIKey != "" || m.formData.Model != "" || m.formData.WireAPI != "" || m.formData.EnvKey != "" || m.formData.ModelReasoningEffort != "" || m.formData.ClaudeDefaultHaikuModel != "" || m.formData.ClaudeDefaultOpusModel != "" || m.formData.ClaudeDefaultSonnetModel != ""
 }
 
 func (m model) hasDroidFormContent() bool {
@@ -212,7 +214,9 @@ func (m model) addConfigView(serviceType string) string {
 			{t("field_provider"), m.formData.Provider},
 			{t("field_base_url"), m.formData.BaseURL},
 			{t("field_api_key"), m.formData.APIKey},
-			{t("field_claude_default_model"), m.formData.ClaudeDefaultModel},
+			{t("field_haiku_model"), m.formData.ClaudeDefaultHaikuModel},
+			{t("field_opus_model"), m.formData.ClaudeDefaultOpusModel},
+			{t("field_sonnet_model"), m.formData.ClaudeDefaultSonnetModel},
 		}
 	}
 
@@ -295,7 +299,9 @@ func (m model) editConfigView(serviceType string) string {
 			{t("field_provider"), m.formData.Provider},
 			{t("field_base_url"), m.formData.BaseURL},
 			{t("field_api_key"), m.formData.APIKey},
-			{t("field_claude_default_model"), m.formData.ClaudeDefaultModel},
+			{t("field_haiku_model"), m.formData.ClaudeDefaultHaikuModel},
+			{t("field_opus_model"), m.formData.ClaudeDefaultOpusModel},
+			{t("field_sonnet_model"), m.formData.ClaudeDefaultSonnetModel},
 		}
 	}
 
