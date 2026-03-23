@@ -240,13 +240,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.formData.AuthMethod = "auth.json"
 				}
 			} else if (m.state == addCodex || m.state == editCodex) && m.formField == FieldModelReasoningEffort {
-				// 推理强度字段：在low、medium、high之间切换
-				if m.formData.ModelReasoningEffort == "low" {
-					m.formData.ModelReasoningEffort = "high"
-				} else if m.formData.ModelReasoningEffort == "high" {
-					m.formData.ModelReasoningEffort = DefaultModelReasoningEffort
+				// 推理强度字段：在low、medium、high、xhigh之间切换
+				if m.formData.ModelReasoningEffort == ModelReasoningEffortLow {
+					m.formData.ModelReasoningEffort = ModelReasoningEffortMedium
+				} else if m.formData.ModelReasoningEffort == ModelReasoningEffortMedium {
+					m.formData.ModelReasoningEffort = ModelReasoningEffortHigh
+				} else if m.formData.ModelReasoningEffort == ModelReasoningEffortHigh {
+					m.formData.ModelReasoningEffort = ModelReasoningEffortXHigh
 				} else {
-					m.formData.ModelReasoningEffort = "low"
+					m.formData.ModelReasoningEffort = ModelReasoningEffortLow
 				}
 			}
 		case tea.KeyRight:
@@ -277,11 +279,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.formData.AuthMethod = "auth.json"
 				}
 			} else if (m.state == addCodex || m.state == editCodex) && m.formField == FieldModelReasoningEffort {
-				// 推理强度字段：在low、medium、high之间切换
+				// 推理强度字段：在low、medium、high、xhigh之间切换
 				if m.formData.ModelReasoningEffort == ModelReasoningEffortLow {
 					m.formData.ModelReasoningEffort = ModelReasoningEffortMedium
 				} else if m.formData.ModelReasoningEffort == ModelReasoningEffortMedium {
 					m.formData.ModelReasoningEffort = ModelReasoningEffortHigh
+				} else if m.formData.ModelReasoningEffort == ModelReasoningEffortHigh {
+					m.formData.ModelReasoningEffort = ModelReasoningEffortXHigh
 				} else {
 					m.formData.ModelReasoningEffort = ModelReasoningEffortLow
 				}

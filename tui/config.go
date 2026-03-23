@@ -10,9 +10,9 @@ import (
 
 // Default model constants
 const (
-	DefaultCodexModel  = "gpt-5.1-codex"
+	DefaultCodexModel  = "gpt-5.4"
 	DefaultClaudeModel = "claude-sonnet-4-5-20250929"
-	DefaultDroidModel  = "gpt-5.1-codex"
+	DefaultDroidModel  = "gpt-5.4"
 )
 
 // Default configuration constants
@@ -27,6 +27,7 @@ const (
 	ModelReasoningEffortLow    = "low"
 	ModelReasoningEffortMedium = "medium"
 	ModelReasoningEffortHigh   = "high"
+	ModelReasoningEffortXHigh  = "xhigh"
 )
 
 var platformPaths PlatformPaths
@@ -42,18 +43,18 @@ func init() {
 }
 
 type ServiceConfig struct {
-	Name                   string `json:"name"`
-	Provider               string `json:"provider"`
-	BaseURL                string `json:"base_url"`
-	APIKey                 string `json:"api_key"`
-	Model                  string `json:"model,omitempty"`
-	WireAPI                string `json:"wire_api,omitempty"`
-	AuthMethod             string `json:"auth_method,omitempty"`
-	EnvKey                 string `json:"env_key,omitempty"`
-	ModelReasoningEffort   string `json:"model_reasoning_effort,omitempty"`
-	ClaudeDefaultModel     string `json:"claude_default_model,omitempty"`
+	Name                     string `json:"name"`
+	Provider                 string `json:"provider"`
+	BaseURL                  string `json:"base_url"`
+	APIKey                   string `json:"api_key"`
+	Model                    string `json:"model,omitempty"`
+	WireAPI                  string `json:"wire_api,omitempty"`
+	AuthMethod               string `json:"auth_method,omitempty"`
+	EnvKey                   string `json:"env_key,omitempty"`
+	ModelReasoningEffort     string `json:"model_reasoning_effort,omitempty"`
+	ClaudeDefaultModel       string `json:"claude_default_model,omitempty"`
 	ClaudeDefaultHaikuModel  string `json:"claude_default_haiku_model,omitempty"`
-	ClaudeDefaultOpusModel  string `json:"claude_default_opus_model,omitempty"`
+	ClaudeDefaultOpusModel   string `json:"claude_default_opus_model,omitempty"`
 	ClaudeDefaultSonnetModel string `json:"claude_default_sonnet_model,omitempty"`
 }
 
