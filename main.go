@@ -72,7 +72,7 @@ func main() {
 			fmt.Printf("Set active Codex failed: %v\n", err)
 			os.Exit(4)
 		}
-		fmt.Printf("Switched Codex to '%s' (provider=%s)\n", sc.Name, sc.Provider)
+		fmt.Printf("Switched Codex to '%s'\n", sc.Name)
 		return
 	}
 
@@ -97,7 +97,7 @@ func main() {
 			fmt.Printf("Set active Claude Code failed: %v\n", err)
 			os.Exit(4)
 		}
-		fmt.Printf("Switched Claude Code to '%s' (provider=%s)\n", sc.Name, sc.Provider)
+		fmt.Printf("Switched Claude Code to '%s'\n", sc.Name)
 		return
 	}
 
@@ -122,7 +122,7 @@ func main() {
 			fmt.Printf("Set active Droid failed: %v\n", err)
 			os.Exit(4)
 		}
-		fmt.Printf("Switched Droid to '%s' (provider=%s)\n", dc.ModelDisplayName, dc.Provider)
+		fmt.Printf("Switched Droid to '%s'\n", dc.ModelDisplayName)
 		return
 	}
 

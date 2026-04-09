@@ -43,14 +43,22 @@ func (m model) droidListView() string {
 		}
 	}
 
-	// Add "Back to menu" option
+	// Add "Back to menu" and "Add" options side by side
 	backSel := m.cursor == len(m.config.Droid)
+	addSel := m.cursor == len(m.config.Droid)+1
 	back := menuItemView(t("back_to_menu"), backSel)
+	add := menuItemView(t("menu_add_item"), addSel)
 	if backSel {
-		rows = append(rows, itemBoxSelStyle.Render(back))
+		back = itemBoxSelStyle.Render(back)
 	} else {
-		rows = append(rows, itemBoxStyle.Render(back))
+		back = itemBoxStyle.Render(back)
 	}
+	if addSel {
+		add = itemBoxSelStyle.Render(add)
+	} else {
+		add = itemBoxStyle.Render(add)
+	}
+	rows = append(rows, lipgloss.JoinHorizontal(lipgloss.Bottom, back, add))
 
 	body := lipgloss.JoinVertical(lipgloss.Left, rows...)
 
@@ -59,7 +67,7 @@ func (m model) droidListView() string {
 	content.WriteString("\n\n")
 	content.WriteString(body)
 	content.WriteString("\n")
-	content.WriteString(statusBarView(t("nav_select"), t("nav_confirm"), t("nav_edit"), t("nav_add")+"  "+t("nav_view")+"  "+t("nav_back")+"  "+t("nav_switch_service")))
+	content.WriteString(statusBarView(t("nav_select"), t("nav_confirm"), t("nav_edit"), t("nav_add")+"  "+t("nav_view")+"  "+t("nav_back")+"  "+t("nav_switch_buttons")))
 	return content.String()
 }
 
@@ -112,7 +120,7 @@ func (m model) addDroidConfigView() string {
 	if m.formField >= 0 && m.formField < DroidFieldCount {
 		content.WriteString("\n" + fieldHighlightStyle.Render(t("hint_current_edit")) + fields[m.formField].label)
 		if m.formField == FieldAPIKey {
-			content.WriteString("\n" + fieldHighlightStyle.Render("   " + t("hint_apikey_visible")))
+			content.WriteString("\n" + fieldHighlightStyle.Render("   "+t("hint_apikey_visible")))
 		}
 	}
 
@@ -168,7 +176,7 @@ func (m model) editDroidConfigView() string {
 	if m.formField >= 0 && m.formField < DroidFieldCount {
 		content.WriteString("\n" + fieldHighlightStyle.Render(t("hint_current_edit")) + fields[m.formField].label)
 		if m.formField == FieldAPIKey {
-			content.WriteString("\n" + fieldHighlightStyle.Render("   " + t("hint_apikey_visible")))
+			content.WriteString("\n" + fieldHighlightStyle.Render("   "+t("hint_apikey_visible")))
 		}
 	}
 

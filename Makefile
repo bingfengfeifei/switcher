@@ -20,8 +20,11 @@ LDFLAGS := -s -w \
 	-X main.date=$(DATE) \
 	-X main.builtBy=$(BUILT_BY)
 
-.PHONY: build install clean build-all build-linux build-darwin build-windows \
+.PHONY: build install clean fmt build-all build-linux build-darwin build-windows \
 	release-test release-snapshot tag help
+
+fmt:
+	gofmt -w .
 
 build:
 	$(GO) build -ldflags "$(LDFLAGS)" -o $(BINARY) .
@@ -85,6 +88,7 @@ tag:
 
 help:
 	@echo "Available targets:"
+	@echo "  fmt              - Format Go source files with gofmt"
 	@echo "  build            - Build binary for current platform"
 	@echo "  build-all        - Build binaries for all platforms"
 	@echo "  install          - Install binary to $(INSTALL_DIR)"

@@ -8,7 +8,6 @@ import (
 // 字段索引常量
 const (
 	FieldName = iota
-	FieldProvider
 	FieldBaseURL
 	FieldAPIKey
 	FieldModel
@@ -22,8 +21,8 @@ const (
 
 // 配置类型字段数量
 const (
-	ClaudeCodeFieldCount = 7 // Name, Provider, BaseURL, APIKey, HaikuModel, OpusModel, SonnetModel
-	CodexFieldCount      = 8
+	ClaudeCodeFieldCount = 6 // Name, BaseURL, APIKey, HaikuModel, OpusModel, SonnetModel
+	CodexFieldCount      = 7 // Name, BaseURL, APIKey, Model, WireAPI, AuthMethod, Reasoning
 	DroidFieldCount      = 4
 )
 
@@ -70,6 +69,10 @@ type model struct {
 
 func (m model) hasFormContent() bool {
 	return m.formData.Name != "" || m.formData.Provider != "" || m.formData.BaseURL != "" || m.formData.APIKey != "" || m.formData.Model != "" || m.formData.WireAPI != "" || m.formData.EnvKey != "" || m.formData.ModelReasoningEffort != "" || m.formData.ClaudeDefaultHaikuModel != "" || m.formData.ClaudeDefaultOpusModel != "" || m.formData.ClaudeDefaultSonnetModel != ""
+}
+
+func (m model) hasRequiredServiceFields() bool {
+	return m.formData.Name != "" && m.formData.BaseURL != "" && m.formData.APIKey != ""
 }
 
 func (m model) hasDroidFormContent() bool {
@@ -145,9 +148,6 @@ func (m model) mainMenuView() string {
 		fmt.Sprintf(t("menu_claude"), activeClaude),
 		fmt.Sprintf(t("menu_codex"), activeCodex),
 		fmt.Sprintf(t("menu_droid"), activeDroid),
-		t("menu_add_claude"),
-		t("menu_add_codex"),
-		t("menu_add_droid"),
 		t("menu_switch_lang"),
 		t("menu_exit"),
 	}
@@ -197,7 +197,6 @@ func (m model) addConfigView(serviceType string) string {
 			value string
 		}{
 			{t("field_name"), m.formData.Name},
-			{t("field_provider"), m.formData.Provider},
 			{t("field_base_url"), m.formData.BaseURL},
 			{t("field_api_key"), m.formData.APIKey},
 			{t("field_model"), m.formData.Model},
@@ -211,7 +210,6 @@ func (m model) addConfigView(serviceType string) string {
 			value string
 		}{
 			{t("field_name"), m.formData.Name},
-			{t("field_provider"), m.formData.Provider},
 			{t("field_base_url"), m.formData.BaseURL},
 			{t("field_api_key"), m.formData.APIKey},
 			{t("field_haiku_model"), m.formData.ClaudeDefaultHaikuModel},
@@ -239,6 +237,14 @@ func (m model) addConfigView(serviceType string) string {
 		// 对于Wire API字段，显示选择选项
 		displayValue := field.value
 		if serviceType == "Codex" && i == FieldWireAPI { // Wire API字段
+			if m.formField == i {
+				displayValue = field.value + " " + t("hint_select")
+			} else {
+				displayValue = field.value
+			}
+		}
+		// 对于认证方式字段，显示选择选项
+		if serviceType == "Codex" && i == FieldAuthMethod {
 			if m.formField == i {
 				displayValue = field.value + " " + t("hint_select")
 			} else {
@@ -282,7 +288,6 @@ func (m model) editConfigView(serviceType string) string {
 			value string
 		}{
 			{t("field_name"), m.formData.Name},
-			{t("field_provider"), m.formData.Provider},
 			{t("field_base_url"), m.formData.BaseURL},
 			{t("field_api_key"), m.formData.APIKey},
 			{t("field_model"), m.formData.Model},
@@ -296,7 +301,6 @@ func (m model) editConfigView(serviceType string) string {
 			value string
 		}{
 			{t("field_name"), m.formData.Name},
-			{t("field_provider"), m.formData.Provider},
 			{t("field_base_url"), m.formData.BaseURL},
 			{t("field_api_key"), m.formData.APIKey},
 			{t("field_haiku_model"), m.formData.ClaudeDefaultHaikuModel},
@@ -330,6 +334,15 @@ func (m model) editConfigView(serviceType string) string {
 			}
 		}
 
+		// 对于认证方式字段，显示选择选项
+		if serviceType == "Codex" && i == FieldAuthMethod {
+			if m.formField == i {
+				displayValue = field.value + " " + t("hint_select")
+			} else {
+				displayValue = field.value
+			}
+		}
+
 		// 对于推理强度字段，显示选择选项
 		if serviceType == "Codex" && i == FieldModelReasoningEffort { // 推理强度字段
 			if m.formField == i {
@@ -341,7 +354,7 @@ func (m model) editConfigView(serviceType string) string {
 
 		highlight := ""
 		if m.formField == i {
-			if serviceType == "Codex" && (i == FieldWireAPI || i == FieldModelReasoningEffort) { // Wire API和推理强度字段
+			if serviceType == "Codex" && (i == FieldWireAPI || i == FieldAuthMethod || i == FieldModelReasoningEffort) { // Wire API、认证方式和推理强度字段
 				highlight = fieldHighlightStyle.Render(" " + t("hint_use_arrows"))
 			} else {
 				highlight = fieldHighlightStyle.Render(" " + t("hint_input"))
@@ -356,10 +369,10 @@ func (m model) editConfigView(serviceType string) string {
 	content.WriteString(statusBarView(t("form_nav_field"), t("form_nav_save"), t("form_nav_cancel"), ""))
 
 	// 添加当前编辑状态提示
-	if m.formField >= 0 && m.formField < DroidFieldCount {
+	if m.formField >= 0 && m.formField < len(fields) {
 		content.WriteString("\n" + fieldHighlightStyle.Render(t("hint_current_edit")) + fields[m.formField].label)
 		if m.formField == FieldAPIKey {
-			content.WriteString("\n" + fieldHighlightStyle.Render("   " + t("hint_apikey_visible")))
+			content.WriteString("\n" + fieldHighlightStyle.Render("   "+t("hint_apikey_visible")))
 		}
 	}
 

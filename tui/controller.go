@@ -31,7 +31,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.state = confirmExitAddClaudeCode
 					m.cursor = 1 // 默认选择"否"
 				} else {
-					m.state = mainMenu
+					m.state = claudeCodeList
 					m.cursor = 0
 					m.error = ""
 				}
@@ -40,7 +40,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.state = confirmExitAddCodex
 					m.cursor = 1 // 默认选择"否"
 				} else {
-					m.state = mainMenu
+					m.state = codexList
 					m.cursor = 0
 					m.error = ""
 				}
@@ -49,7 +49,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.state = confirmExitAddDroid
 					m.cursor = 1 // 默认选择"否"
 				} else {
-					m.state = mainMenu
+					m.state = droidList
 					m.cursor = 0
 					m.error = ""
 				}
@@ -213,15 +213,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		case tea.KeyLeft:
-			if m.state == codexList {
-				m.state = claudeCodeList
-				if m.cursor > len(m.config.ClaudeCode) {
-					m.cursor = len(m.config.ClaudeCode)
-				}
-			} else if m.state == droidList {
-				m.state = codexList
-				if m.cursor > len(m.config.Codex) {
-					m.cursor = len(m.config.Codex)
+			if m.state == claudeCodeList || m.state == codexList || m.state == droidList {
+				// 无论光标在哪，直接跳到返回按钮
+				switch m.state {
+				case claudeCodeList:
+					m.cursor = len(m.sortedClaudeCode)
+				case codexList:
+					m.cursor = len(m.sortedCodex)
+				case droidList:
+					m.cursor = len(m.sortedDroid)
 				}
 			} else if m.state == confirmDeleteClaudeCode || m.state == confirmDeleteCodex || m.state == confirmDeleteDroid || m.state == confirmExitAddClaudeCode || m.state == confirmExitAddCodex || m.state == confirmExitAddDroid {
 				m.cursor = 0 // 选择"确认删除"或"确认退出"
@@ -252,15 +252,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		case tea.KeyRight:
-			if m.state == claudeCodeList {
-				m.state = codexList
-				if m.cursor > len(m.config.Codex) {
-					m.cursor = len(m.config.Codex)
-				}
-			} else if m.state == codexList {
-				m.state = droidList
-				if m.cursor > len(m.config.Droid) {
-					m.cursor = len(m.config.Droid)
+			if m.state == claudeCodeList || m.state == codexList || m.state == droidList {
+				// 无论光标在哪，直接跳到新增按钮
+				switch m.state {
+				case claudeCodeList:
+					m.cursor = len(m.sortedClaudeCode) + 1
+				case codexList:
+					m.cursor = len(m.sortedCodex) + 1
+				case droidList:
+					m.cursor = len(m.sortedDroid) + 1
 				}
 			} else if m.state == confirmDeleteClaudeCode || m.state == confirmDeleteCodex || m.state == confirmDeleteDroid || m.state == confirmExitAddClaudeCode || m.state == confirmExitAddCodex || m.state == confirmExitAddDroid {
 				m.cursor = 1 // 选择"取消"
@@ -293,7 +293,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyEnter:
 			// 在添加/编辑状态下，Enter直接保存
 			if m.state == addClaudeCode {
-				if m.formData.Name != "" && m.formData.Provider != "" && m.formData.BaseURL != "" && m.formData.APIKey != "" {
+				if m.hasRequiredServiceFields() {
 					err := m.config.AddClaudeCodeConfig(m.formData)
 					if err != nil {
 						m.error = err.Error()
@@ -306,7 +306,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.error = t("error_fill_all")
 				}
 			} else if m.state == addCodex {
-				if m.formData.Name != "" && m.formData.Provider != "" && m.formData.BaseURL != "" && m.formData.APIKey != "" {
+				if m.hasRequiredServiceFields() {
 					// Set default values for Codex config
 					if m.formData.Model == "" {
 						m.formData.Model = DefaultCodexModel
@@ -347,7 +347,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.error = t("error_fill_all")
 				}
 			} else if m.state == editClaudeCode {
-				if m.formData.Name != "" && m.formData.Provider != "" && m.formData.BaseURL != "" && m.formData.APIKey != "" {
+				if m.hasRequiredServiceFields() {
+					m.formData.Provider = "switcher"
 					m.config.ClaudeCode[m.editIndex] = m.formData
 					err := m.config.Save()
 					if err != nil {
@@ -361,7 +362,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.error = t("error_fill_all")
 				}
 			} else if m.state == editCodex {
-				if m.formData.Name != "" && m.formData.Provider != "" && m.formData.BaseURL != "" && m.formData.APIKey != "" {
+				if m.hasRequiredServiceFields() {
 					// Set default values for Codex config
 					if m.formData.Model == "" {
 						m.formData.Model = DefaultCodexModel
@@ -379,6 +380,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.formData.EnvKey = ""
 					}
 
+					m.formData.Provider = "switcher"
 					m.config.Codex[m.editIndex] = m.formData
 					err := m.config.Save()
 					if err != nil {
@@ -393,6 +395,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			} else if m.state == editDroid {
 				if m.droidFormData.ModelDisplayName != "" && m.droidFormData.Model != "" && m.droidFormData.BaseURL != "" && m.droidFormData.APIKey != "" {
+					m.droidFormData.Provider = "switcher"
 					m.config.Droid[m.editIndex] = m.droidFormData
 					err := m.config.Save()
 					if err != nil {
@@ -440,7 +443,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.editIndex = originalIndex
 					m.formData = m.config.Codex[m.editIndex]
 					m.state = editCodex
-					m.cursor = 0 // Codex有6个字段，从第一个字段开始
+					m.cursor = 0 // Codex有7个字段，从第一个字段开始
 					m.formField = 0
 					m.error = ""
 				}
@@ -459,10 +462,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.error = ""
 				}
 			} else if m.state == addClaudeCode || m.state == editClaudeCode {
-				// Claude Code有4个字段
+				// Claude Code有6个字段
 				m.formField = (m.formField + 1) % ClaudeCodeFieldCount
 			} else if m.state == addCodex || m.state == editCodex {
-				// Codex有6个字段(不包含EnvKey)
+				// Codex有7个字段
 				m.formField = (m.formField + 1) % CodexFieldCount
 			} else if m.state == addDroid || m.state == editDroid {
 				// Droid有4个字段
@@ -471,7 +474,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyCtrlS:
 			// Ctrl+S 直接保存编辑/新增
 			if m.state == editClaudeCode {
-				if m.formData.Name != "" && m.formData.Provider != "" && m.formData.BaseURL != "" && m.formData.APIKey != "" {
+				if m.hasRequiredServiceFields() {
+					m.formData.Provider = "switcher"
 					m.config.ClaudeCode[m.editIndex] = m.formData
 					if err := m.config.Save(); err != nil {
 						m.error = err.Error()
@@ -484,7 +488,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.error = t("error_fill_all")
 				}
 			} else if m.state == addClaudeCode {
-				if m.formData.Name != "" && m.formData.Provider != "" && m.formData.BaseURL != "" && m.formData.APIKey != "" {
+				if m.hasRequiredServiceFields() {
 					if err := m.config.AddClaudeCodeConfig(m.formData); err != nil {
 						m.error = err.Error()
 					} else {
@@ -496,7 +500,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.error = t("error_fill_all")
 				}
 			} else if m.state == editCodex {
-				if m.formData.Name != "" && m.formData.Provider != "" && m.formData.BaseURL != "" && m.formData.APIKey != "" {
+				if m.hasRequiredServiceFields() {
 					// Set default values for Codex config
 					if m.formData.Model == "" {
 						m.formData.Model = DefaultCodexModel
@@ -514,6 +518,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.formData.EnvKey = ""
 					}
 
+					m.formData.Provider = "switcher"
 					m.config.Codex[m.editIndex] = m.formData
 					if err := m.config.Save(); err != nil {
 						m.error = err.Error()
@@ -526,7 +531,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.error = t("error_fill_all")
 				}
 			} else if m.state == addCodex {
-				if m.formData.Name != "" && m.formData.Provider != "" && m.formData.BaseURL != "" && m.formData.APIKey != "" {
+				if m.hasRequiredServiceFields() {
 					// Set default values for Codex config
 					if m.formData.Model == "" {
 						m.formData.Model = DefaultCodexModel
@@ -556,6 +561,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			} else if m.state == editDroid {
 				if m.droidFormData.ModelDisplayName != "" && m.droidFormData.Model != "" && m.droidFormData.BaseURL != "" && m.droidFormData.APIKey != "" {
+					m.droidFormData.Provider = "switcher"
 					m.config.Droid[m.editIndex] = m.droidFormData
 					if err := m.config.Save(); err != nil {
 						m.error = err.Error()
@@ -630,13 +636,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) getMaxCursor() int {
 	switch m.state {
 	case mainMenu:
-		return 7
+		return 4
 	case claudeCodeList:
-		return len(m.sortedClaudeCode) // 返回排序后的配置数量
+		return len(m.sortedClaudeCode) + 1 // 配置数量 + 新增按钮
 	case codexList:
-		return len(m.sortedCodex) // 返回排序后的配置数量
+		return len(m.sortedCodex) + 1 // 配置数量 + 新增按钮
 	case droidList:
-		return len(m.sortedDroid) // 返回排序后的配置数量
+		return len(m.sortedDroid) + 1 // 配置数量 + 新增按钮
 	// 操作菜单已移除，保存/取消按钮已移除
 	case addClaudeCode, editClaudeCode:
 		return ClaudeCodeFieldCount - 1 // 字段 0..4
@@ -668,27 +674,12 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 			m.cursor = 0
 			m.sortDroidConfigs() // 进入时排序一次
 		case 3:
-			m.state = addClaudeCode
-			m.cursor = 0
-			m.formField = 0
-			m.formData = ServiceConfig{}
-		case 4:
-			m.state = addCodex
-			m.cursor = 0
-			m.formField = 0
-			m.formData = ServiceConfig{}
-		case 5:
-			m.state = addDroid
-			m.cursor = 0
-			m.formField = 0
-			m.droidFormData = DroidConfig{}
-		case 6:
 			// 切换语言
 			ToggleLanguage()
 			m.config.Language = GetLanguage()
 			m.config.Save()
 			m.error = t("success_lang_switch")
-		case 7:
+		case 4:
 			return m, tea.Quit
 		}
 	case claudeCodeList:
@@ -697,6 +688,13 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 			m.sortedClaudeCode = nil
 			m.state = mainMenu
 			m.cursor = 0
+		} else if m.cursor == len(m.sortedClaudeCode)+1 {
+			// 新增配置
+			m.state = addClaudeCode
+			m.formData = ServiceConfig{}
+			m.formField = 0
+			m.cursor = 0
+			m.error = ""
 		} else {
 			// 回车直接切换
 			originalIndex := findConfigIndex(m.config.ClaudeCode, m.sortedClaudeCode[m.cursor])
@@ -720,6 +718,13 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 			m.sortedCodex = nil
 			m.state = mainMenu
 			m.cursor = 0
+		} else if m.cursor == len(m.sortedCodex)+1 {
+			// 新增配置
+			m.state = addCodex
+			m.formData = ServiceConfig{}
+			m.formField = 0
+			m.cursor = 0
+			m.error = ""
 		} else {
 			// 回车直接切换
 			originalIndex := findConfigIndex(m.config.Codex, m.sortedCodex[m.cursor])
@@ -742,6 +747,13 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 			m.sortedDroid = nil
 			m.state = mainMenu
 			m.cursor = 0
+		} else if m.cursor == len(m.sortedDroid)+1 {
+			// 新增配置
+			m.state = addDroid
+			m.droidFormData = DroidConfig{}
+			m.formField = 0
+			m.cursor = 0
+			m.error = ""
 		} else {
 			// 回车直接切换
 			originalIndex := findDroidConfigIndex(m.config.Droid, m.sortedDroid[m.cursor])
@@ -761,7 +773,7 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 	// 操作菜单已移除
 	case addClaudeCode:
 		if m.cursor == ClaudeCodeFieldCount {
-			if m.formData.Name != "" && m.formData.Provider != "" && m.formData.BaseURL != "" && m.formData.APIKey != "" {
+			if m.hasRequiredServiceFields() {
 				err := m.config.AddClaudeCodeConfig(m.formData)
 				if err != nil {
 					m.error = err.Error()
@@ -779,7 +791,7 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 		}
 	case addCodex:
 		if m.cursor == 6 {
-			if m.formData.Name != "" && m.formData.Provider != "" && m.formData.BaseURL != "" && m.formData.APIKey != "" {
+			if m.hasRequiredServiceFields() {
 				// Set default values for Codex config
 				if m.formData.Model == "" {
 					m.formData.Model = DefaultCodexModel
@@ -827,7 +839,8 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 		}
 	case editClaudeCode:
 		if m.cursor == 4 {
-			if m.formData.Name != "" && m.formData.Provider != "" && m.formData.BaseURL != "" && m.formData.APIKey != "" {
+			if m.hasRequiredServiceFields() {
+				m.formData.Provider = "switcher"
 				m.config.ClaudeCode[m.editIndex] = m.formData
 				err := m.config.Save()
 				if err != nil {
@@ -846,7 +859,7 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 		}
 	case editCodex:
 		if m.cursor == 6 {
-			if m.formData.Name != "" && m.formData.Provider != "" && m.formData.BaseURL != "" && m.formData.APIKey != "" {
+			if m.hasRequiredServiceFields() {
 				// Set default values for Codex config
 				if m.formData.Model == "" {
 					m.formData.Model = DefaultCodexModel
@@ -864,6 +877,7 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 					m.formData.EnvKey = ""
 				}
 
+				m.formData.Provider = "switcher"
 				m.config.Codex[m.editIndex] = m.formData
 				err := m.config.Save()
 				if err != nil {
@@ -883,6 +897,7 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 	case editDroid:
 		if m.cursor == 4 {
 			if m.droidFormData.ModelDisplayName != "" && m.droidFormData.Model != "" && m.droidFormData.BaseURL != "" && m.droidFormData.APIKey != "" {
+				m.droidFormData.Provider = "switcher"
 				m.config.Droid[m.editIndex] = m.droidFormData
 				err := m.config.Save()
 				if err != nil {
@@ -965,7 +980,7 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 	case confirmExitAddClaudeCode:
 		if m.cursor == 0 {
 			// 确认退出，清空表单内容
-			m.state = mainMenu
+			m.state = claudeCodeList
 			m.cursor = 0
 			m.formData = ServiceConfig{}
 			m.error = ""
@@ -977,7 +992,7 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 	case confirmExitAddCodex:
 		if m.cursor == 0 {
 			// 确认退出，清空表单内容
-			m.state = mainMenu
+			m.state = codexList
 			m.cursor = 0
 			m.formData = ServiceConfig{}
 			m.error = ""
@@ -989,7 +1004,7 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 	case confirmExitAddDroid:
 		if m.cursor == 0 {
 			// 确认退出，清空表单内容
-			m.state = mainMenu
+			m.state = droidList
 			m.cursor = 0
 			m.droidFormData = DroidConfig{}
 			m.error = ""
@@ -1029,16 +1044,14 @@ func (m model) handleInput(char string) (tea.Model, tea.Cmd) {
 		case 0:
 			m.formData.Name += s
 		case 1:
-			m.formData.Provider += s
-		case 2:
 			m.formData.BaseURL += s
-		case 3:
+		case 2:
 			m.formData.APIKey += s
-		case 4:
+		case 3:
 			m.formData.ClaudeDefaultHaikuModel += s
-		case 5:
+		case 4:
 			m.formData.ClaudeDefaultOpusModel += s
-		case 6:
+		case 5:
 			m.formData.ClaudeDefaultSonnetModel += s
 		}
 		return m, nil
@@ -1049,17 +1062,17 @@ func (m model) handleInput(char string) (tea.Model, tea.Cmd) {
 	case 0:
 		m.formData.Name += s
 	case 1:
-		m.formData.Provider += s
-	case 2:
 		m.formData.BaseURL += s
-	case 3:
+	case 2:
 		m.formData.APIKey += s
-	case 4:
+	case 3:
 		m.formData.Model += s
-	case 5:
+	case 4:
 		// Wire API字段：不处理输入，使用左右键选择
+	case 5:
+		// AuthMethod字段：不处理输入，使用左右键选择
 	case 6:
-		m.formData.EnvKey += s
+		// 推理强度字段：不处理输入，使用左右键选择
 	}
 	return m, nil
 }
@@ -1101,31 +1114,26 @@ func (m model) handleBackspace() (tea.Model, tea.Cmd) {
 				m.formData.Name = string(r[:len(r)-1])
 			}
 		case 1:
-			if len(m.formData.Provider) > 0 {
-				r := []rune(m.formData.Provider)
-				m.formData.Provider = string(r[:len(r)-1])
-			}
-		case 2:
 			if len(m.formData.BaseURL) > 0 {
 				r := []rune(m.formData.BaseURL)
 				m.formData.BaseURL = string(r[:len(r)-1])
 			}
-		case 3:
+		case 2:
 			if len(m.formData.APIKey) > 0 {
 				r := []rune(m.formData.APIKey)
 				m.formData.APIKey = string(r[:len(r)-1])
 			}
-		case 4:
+		case 3:
 			if len(m.formData.ClaudeDefaultHaikuModel) > 0 {
 				r := []rune(m.formData.ClaudeDefaultHaikuModel)
 				m.formData.ClaudeDefaultHaikuModel = string(r[:len(r)-1])
 			}
-		case 5:
+		case 4:
 			if len(m.formData.ClaudeDefaultOpusModel) > 0 {
 				r := []rune(m.formData.ClaudeDefaultOpusModel)
 				m.formData.ClaudeDefaultOpusModel = string(r[:len(r)-1])
 			}
-		case 6:
+		case 5:
 			if len(m.formData.ClaudeDefaultSonnetModel) > 0 {
 				r := []rune(m.formData.ClaudeDefaultSonnetModel)
 				m.formData.ClaudeDefaultSonnetModel = string(r[:len(r)-1])
@@ -1142,32 +1150,26 @@ func (m model) handleBackspace() (tea.Model, tea.Cmd) {
 			m.formData.Name = string(r[:len(r)-1])
 		}
 	case 1:
-		if len(m.formData.Provider) > 0 {
-			r := []rune(m.formData.Provider)
-			m.formData.Provider = string(r[:len(r)-1])
-		}
-	case 2:
 		if len(m.formData.BaseURL) > 0 {
 			r := []rune(m.formData.BaseURL)
 			m.formData.BaseURL = string(r[:len(r)-1])
 		}
-	case 3:
+	case 2:
 		if len(m.formData.APIKey) > 0 {
 			r := []rune(m.formData.APIKey)
 			m.formData.APIKey = string(r[:len(r)-1])
 		}
-	case 4:
+	case 3:
 		if len(m.formData.Model) > 0 {
 			r := []rune(m.formData.Model)
 			m.formData.Model = string(r[:len(r)-1])
 		}
-	case 5:
+	case 4:
 		// Wire API字段：不处理退格，使用左右键选择
+	case 5:
+		// AuthMethod字段：不处理退格，使用左右键选择
 	case 6:
-		if len(m.formData.EnvKey) > 0 {
-			r := []rune(m.formData.EnvKey)
-			m.formData.EnvKey = string(r[:len(r)-1])
-		}
+		// 推理强度字段：不处理退格，使用左右键选择
 	}
 	return m, nil
 }

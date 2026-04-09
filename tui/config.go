@@ -346,11 +346,13 @@ func (c *Config) migrateClaudeConfigs() {
 }
 
 func (c *Config) AddClaudeCodeConfig(config ServiceConfig) error {
+	config.Provider = "switcher"
 	c.ClaudeCode = append(c.ClaudeCode, config)
 	return c.Save()
 }
 
 func (c *Config) AddCodexConfig(config ServiceConfig) error {
+	config.Provider = "switcher"
 	c.Codex = append(c.Codex, config)
 	return c.Save()
 }
@@ -742,6 +744,7 @@ func serverToTomlArray(args []string) string {
 
 // Droid configuration management methods
 func (c *Config) AddDroidConfig(config DroidConfig) error {
+	config.Provider = "switcher"
 	c.Droid = append(c.Droid, config)
 	return c.Save()
 }
@@ -854,7 +857,7 @@ func (c *Config) SwitchDroid(config *DroidConfig) error {
 // findConfigIndex 查找配置在原始列表中的索引
 func findConfigIndex(configs []ServiceConfig, target ServiceConfig) int {
 	for i, cfg := range configs {
-		if cfg.Name == target.Name && cfg.Provider == target.Provider && cfg.BaseURL == target.BaseURL && cfg.APIKey == target.APIKey {
+		if cfg.Name == target.Name && cfg.BaseURL == target.BaseURL && cfg.APIKey == target.APIKey {
 			return i
 		}
 	}

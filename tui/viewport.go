@@ -6,10 +6,10 @@ import (
 
 const (
 	// Fixed height for UI elements
-	headerHeight        = 3  // 空行 + 标题 + 空行
-	statusBarHeight     = 2  // 空行 + 状态栏
-	backToMenuHeight    = 1  // "Back to menu" 选项
-	warningHeight       = 3  // 警告框（包括边框）
+	headerHeight          = 3 // 空行 + 标题 + 空行
+	statusBarHeight       = 2 // 空行 + 状态栏
+	backToMenuHeight      = 1 // "Back to menu" 选项
+	warningHeight         = 3 // 警告框（包括边框）
 	scrollIndicatorHeight = 1 // 滚动指示器
 )
 
@@ -83,7 +83,7 @@ func updateCursorViewport(cursor, totalItems, viewportSize int) (int, int) {
 	}
 
 	// If cursor is near the end, show the last viewport
-	if cursor >= totalItems - viewportSize {
+	if cursor >= totalItems-viewportSize {
 		start := totalItems - viewportSize
 		return start, totalItems
 	}
