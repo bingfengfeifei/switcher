@@ -10,7 +10,7 @@ import (
 
 // Default model constants
 const (
-	DefaultCodexModel  = "gpt-5.4"
+	DefaultCodexModel  = "gpt-5.5"
 	DefaultClaudeModel = "claude-sonnet-4-5-20250929"
 	DefaultDroidModel  = "gpt-5.4"
 )
