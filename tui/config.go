@@ -28,7 +28,23 @@ const (
 	ModelReasoningEffortMedium = "medium"
 	ModelReasoningEffortHigh   = "high"
 	ModelReasoningEffortXHigh  = "xhigh"
+	ModelReasoningEffortMax    = "max"
+	ModelReasoningEffortAuto   = "auto"
 )
+
+// Claude Code effort level constants
+const (
+	DefaultClaudeEffortLevel = "auto"
+)
+
+var claudeEffortLevels = []string{
+	ModelReasoningEffortLow,
+	ModelReasoningEffortMedium,
+	ModelReasoningEffortHigh,
+	ModelReasoningEffortXHigh,
+	ModelReasoningEffortMax,
+	ModelReasoningEffortAuto,
+}
 
 var platformPaths PlatformPaths
 var shellManager ShellManager
@@ -56,6 +72,7 @@ type ServiceConfig struct {
 	ClaudeDefaultHaikuModel  string `json:"claude_default_haiku_model,omitempty"`
 	ClaudeDefaultOpusModel   string `json:"claude_default_opus_model,omitempty"`
 	ClaudeDefaultSonnetModel string `json:"claude_default_sonnet_model,omitempty"`
+	EffortLevel              string `json:"effort_level,omitempty"`
 }
 
 type DroidConfig struct {
@@ -337,6 +354,11 @@ func (c *Config) migrateClaudeConfigs() {
 				migrated = true
 			}
 		}
+		// Set default effort level if empty
+		if c.ClaudeCode[i].EffortLevel == "" {
+			c.ClaudeCode[i].EffortLevel = DefaultClaudeEffortLevel
+			migrated = true
+		}
 	}
 
 	// Save if any migrations were applied
@@ -456,6 +478,13 @@ func (c *Config) SwitchClaudeCode(config *ServiceConfig) error {
 	if config.ClaudeDefaultSonnetModel != "" {
 		settings.Env["ANTHROPIC_DEFAULT_SONNET_MODEL"] = config.ClaudeDefaultSonnetModel
 	}
+
+	// 设置推理强度环境变量
+	effortLevel := config.EffortLevel
+	if effortLevel == "" {
+		effortLevel = DefaultClaudeEffortLevel
+	}
+	settings.Env["ANTHROPIC_EFFORT_LEVEL"] = effortLevel
 
 	data, err := json.MarshalIndent(settings, "", "  ")
 	if err != nil {

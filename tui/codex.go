@@ -54,8 +54,8 @@ func (m model) codexListView() string {
 	}
 
 	// Add "Back to menu" and "Add" options side by side
-	backSel := m.cursor == len(m.config.Codex)
-	addSel := m.cursor == len(m.config.Codex)+1
+	backSel := m.cursor == len(m.sortedCodex)
+	addSel := m.cursor == len(m.sortedCodex)+1
 	back := menuItemView(t("back_to_menu"), backSel)
 	add := menuItemView(t("menu_add_item"), addSel)
 	if backSel {
@@ -123,9 +123,7 @@ func (m model) getOriginalCodexIndex(sortedIndex int) int {
 
 // sortCodexConfigs 对 Codex 配置进行排序
 func (m *model) sortCodexConfigs() {
-	if m.sortedCodex == nil {
-		m.sortedCodex = m.getSortedCodexConfigs()
-	}
+	m.sortedCodex = m.getSortedCodexConfigs()
 }
 
 func checkAppliedCodexLocal(c *Config) (bool, string, error) {

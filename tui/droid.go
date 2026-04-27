@@ -44,8 +44,8 @@ func (m model) droidListView() string {
 	}
 
 	// Add "Back to menu" and "Add" options side by side
-	backSel := m.cursor == len(m.config.Droid)
-	addSel := m.cursor == len(m.config.Droid)+1
+	backSel := m.cursor == len(m.sortedDroid)
+	addSel := m.cursor == len(m.sortedDroid)+1
 	back := menuItemView(t("back_to_menu"), backSel)
 	add := menuItemView(t("menu_add_item"), addSel)
 	if backSel {
@@ -260,7 +260,5 @@ func (m model) getOriginalDroidIndex(sortedIndex int) int {
 
 // sortDroidConfigs 对 Droid 配置进行排序
 func (m *model) sortDroidConfigs() {
-	if m.sortedDroid == nil {
-		m.sortedDroid = m.getSortedDroidConfigs()
-	}
+	m.sortedDroid = m.getSortedDroidConfigs()
 }

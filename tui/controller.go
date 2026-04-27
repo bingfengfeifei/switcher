@@ -80,7 +80,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case tea.KeyUp:
 			if m.state == addClaudeCode || m.state == editClaudeCode {
-				// Claude Code: 5个字段，在字段之间导航
+				// Claude Code: 7个字段，在字段之间导航
 				if m.cursor > ClaudeCodeFieldCount-1 {
 					m.cursor = ClaudeCodeFieldCount - 1
 					m.formField = m.cursor
@@ -129,7 +129,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case tea.KeyDown:
 			if m.state == addClaudeCode || m.state == editClaudeCode {
-				// Claude Code: 5个字段，只在字段之间导航
+				// Claude Code: 7个字段，只在字段之间导航
 				if m.cursor < ClaudeCodeFieldCount-1 {
 					// 在字段之间切换时，更新formField为当前位置
 					m.formField = m.cursor + 1
@@ -196,11 +196,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.state = addClaudeCode
 					m.formData = ServiceConfig{}
 					m.formField = 0
-					m.cursor = ClaudeCodeFieldCount
+					m.cursor = 0
 					m.error = ""
 				} else if m.state == codexList {
 					m.state = addCodex
-					m.formData = ServiceConfig{}
+					m.formData = ServiceConfig{
+						Model:                DefaultCodexModel,
+						WireAPI:              DefaultWireAPI,
+						AuthMethod:           "auth.json",
+						ModelReasoningEffort: DefaultModelReasoningEffort,
+					}
 					m.formField = 0
 					m.cursor = 0
 					m.error = ""
@@ -250,7 +255,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				} else {
 					m.formData.ModelReasoningEffort = ModelReasoningEffortLow
 				}
+			} else if (m.state == addClaudeCode || m.state == editClaudeCode) && m.formField == 3 {
+				// Claude Code推理强度字段：在auto、low、medium、high、xhigh、max之间切换
+				if m.formData.EffortLevel == ModelReasoningEffortAuto {
+					m.formData.EffortLevel = ModelReasoningEffortLow
+				} else if m.formData.EffortLevel == ModelReasoningEffortLow {
+					m.formData.EffortLevel = ModelReasoningEffortMedium
+				} else if m.formData.EffortLevel == ModelReasoningEffortMedium {
+					m.formData.EffortLevel = ModelReasoningEffortHigh
+				} else if m.formData.EffortLevel == ModelReasoningEffortHigh {
+					m.formData.EffortLevel = ModelReasoningEffortXHigh
+				} else if m.formData.EffortLevel == ModelReasoningEffortXHigh {
+					m.formData.EffortLevel = ModelReasoningEffortMax
+				} else {
+					m.formData.EffortLevel = ModelReasoningEffortAuto
+				}
 			}
+	
 		case tea.KeyRight:
 			if m.state == claudeCodeList || m.state == codexList || m.state == droidList {
 				// 无论光标在哪，直接跳到新增按钮
@@ -289,7 +310,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				} else {
 					m.formData.ModelReasoningEffort = ModelReasoningEffortLow
 				}
+			} else if (m.state == addClaudeCode || m.state == editClaudeCode) && m.formField == 3 {
+				// Claude Code推理强度字段：在auto、low、medium、high、xhigh、max之间切换
+				if m.formData.EffortLevel == ModelReasoningEffortAuto {
+					m.formData.EffortLevel = ModelReasoningEffortLow
+				} else if m.formData.EffortLevel == ModelReasoningEffortLow {
+					m.formData.EffortLevel = ModelReasoningEffortMedium
+				} else if m.formData.EffortLevel == ModelReasoningEffortMedium {
+					m.formData.EffortLevel = ModelReasoningEffortHigh
+				} else if m.formData.EffortLevel == ModelReasoningEffortHigh {
+					m.formData.EffortLevel = ModelReasoningEffortXHigh
+				} else if m.formData.EffortLevel == ModelReasoningEffortXHigh {
+					m.formData.EffortLevel = ModelReasoningEffortMax
+				} else {
+					m.formData.EffortLevel = ModelReasoningEffortAuto
+				}
 			}
+	
 		case tea.KeyEnter:
 			// 在添加/编辑状态下，Enter直接保存
 			if m.state == addClaudeCode {
@@ -409,14 +446,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.error = t("error_fill_all")
 				}
 			} else {
-				return m.handleSelect()
+				var cmd tea.Cmd
+				mm, cmd := m.handleSelect()
+				m = mm.(model)
+				if cmd != nil {
+					return m, cmd
+				}
 			}
 		case tea.KeySpace:
 			// 编辑/新增模式下，空格应作为字符输入
 			if m.state == addClaudeCode || m.state == addCodex || m.state == addDroid || m.state == editClaudeCode || m.state == editCodex || m.state == editDroid {
 				return m.handleInput(" ")
 			}
-			return m.handleSelect()
+			var cmd tea.Cmd
+			mm, cmd := m.handleSelect()
+			m = mm.(model)
+			if cmd != nil {
+				return m, cmd
+			}
 		case tea.KeyTab:
 			// 列表界面：Tab 进入编辑；编辑/新增界面：Tab 切换字段
 			if m.state == claudeCodeList {
@@ -462,7 +509,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.error = ""
 				}
 			} else if m.state == addClaudeCode || m.state == editClaudeCode {
-				// Claude Code有6个字段
+				// Claude Code有7个字段
 				m.formField = (m.formField + 1) % ClaudeCodeFieldCount
 			} else if m.state == addCodex || m.state == editCodex {
 				// Codex有7个字段
@@ -630,6 +677,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// 兜底：非 KeyRunes 情况下一般不接收字符输入。
 		}
 	}
+	// 列表状态时刷新排序列表，确保添加/编辑/删除后立即更新
+	switch m.state {
+	case claudeCodeList:
+		m.sortClaudeCodeConfigs()
+	case codexList:
+		m.sortCodexConfigs()
+	case droidList:
+		m.sortDroidConfigs()
+	}
 	return m, nil
 }
 
@@ -645,7 +701,7 @@ func (m model) getMaxCursor() int {
 		return len(m.sortedDroid) + 1 // 配置数量 + 新增按钮
 	// 操作菜单已移除，保存/取消按钮已移除
 	case addClaudeCode, editClaudeCode:
-		return ClaudeCodeFieldCount - 1 // 字段 0..4
+		return ClaudeCodeFieldCount - 1 // 字段 0..6
 	case addDroid, editDroid:
 		return DroidFieldCount - 1 // 字段 0..3
 	case addCodex, editCodex:
@@ -709,6 +765,7 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 				m.error = err.Error()
 			} else {
 				m.error = t("success_switch_claude")
+				m.cursor = 0
 			}
 		}
 		// 操作菜单已移除
@@ -739,6 +796,7 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 				m.error = err.Error()
 			} else {
 				m.error = t("success_switch_codex")
+				m.cursor = 0
 			}
 		}
 	case droidList:
@@ -768,6 +826,7 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 				m.error = err.Error()
 			} else {
 				m.error = t("success_switch_droid")
+				m.cursor = 0
 			}
 		}
 	// 操作菜单已移除
@@ -1048,10 +1107,12 @@ func (m model) handleInput(char string) (tea.Model, tea.Cmd) {
 		case 2:
 			m.formData.APIKey += s
 		case 3:
-			m.formData.ClaudeDefaultHaikuModel += s
+			// EffortLevel: 选择字段，不处理文本输入
 		case 4:
-			m.formData.ClaudeDefaultOpusModel += s
+			m.formData.ClaudeDefaultHaikuModel += s
 		case 5:
+			m.formData.ClaudeDefaultOpusModel += s
+		case 6:
 			m.formData.ClaudeDefaultSonnetModel += s
 		}
 		return m, nil
@@ -1124,16 +1185,18 @@ func (m model) handleBackspace() (tea.Model, tea.Cmd) {
 				m.formData.APIKey = string(r[:len(r)-1])
 			}
 		case 3:
+			// EffortLevel: 选择字段，不处理退格
+		case 4:
 			if len(m.formData.ClaudeDefaultHaikuModel) > 0 {
 				r := []rune(m.formData.ClaudeDefaultHaikuModel)
 				m.formData.ClaudeDefaultHaikuModel = string(r[:len(r)-1])
 			}
-		case 4:
+		case 5:
 			if len(m.formData.ClaudeDefaultOpusModel) > 0 {
 				r := []rune(m.formData.ClaudeDefaultOpusModel)
 				m.formData.ClaudeDefaultOpusModel = string(r[:len(r)-1])
 			}
-		case 5:
+		case 6:
 			if len(m.formData.ClaudeDefaultSonnetModel) > 0 {
 				r := []rune(m.formData.ClaudeDefaultSonnetModel)
 				m.formData.ClaudeDefaultSonnetModel = string(r[:len(r)-1])

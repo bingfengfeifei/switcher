@@ -54,8 +54,8 @@ func (m model) claudeCodeListView() string {
 	}
 
 	// Add "Back to menu" and "Add" options side by side
-	backSel := m.cursor == len(m.config.ClaudeCode)
-	addSel := m.cursor == len(m.config.ClaudeCode)+1
+	backSel := m.cursor == len(m.sortedClaudeCode)
+	addSel := m.cursor == len(m.sortedClaudeCode)+1
 	back := menuItemView(t("back_to_menu"), backSel)
 	add := menuItemView(t("menu_add_item"), addSel)
 	if backSel {
@@ -123,9 +123,7 @@ func (m model) getOriginalClaudeCodeIndex(sortedIndex int) int {
 
 // sortClaudeCodeConfigs 对 Claude Code 配置进行排序
 func (m *model) sortClaudeCodeConfigs() {
-	if m.sortedClaudeCode == nil {
-		m.sortedClaudeCode = m.getSortedClaudeCodeConfigs()
-	}
+	m.sortedClaudeCode = m.getSortedClaudeCodeConfigs()
 }
 
 // Local checks for applied vs selected configs

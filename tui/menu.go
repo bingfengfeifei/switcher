@@ -14,6 +14,7 @@ const (
 	FieldWireAPI
 	FieldAuthMethod
 	FieldModelReasoningEffort
+	FieldClaudeEffortLevel
 	FieldClaudeDefaultHaikuModel
 	FieldClaudeDefaultOpusModel
 	FieldClaudeDefaultSonnetModel
@@ -21,7 +22,7 @@ const (
 
 // 配置类型字段数量
 const (
-	ClaudeCodeFieldCount = 6 // Name, BaseURL, APIKey, HaikuModel, OpusModel, SonnetModel
+	ClaudeCodeFieldCount = 7 // Name, BaseURL, APIKey, EffortLevel, HaikuModel, OpusModel, SonnetModel
 	CodexFieldCount      = 7 // Name, BaseURL, APIKey, Model, WireAPI, AuthMethod, Reasoning
 	DroidFieldCount      = 4
 )
@@ -68,7 +69,7 @@ type model struct {
 }
 
 func (m model) hasFormContent() bool {
-	return m.formData.Name != "" || m.formData.Provider != "" || m.formData.BaseURL != "" || m.formData.APIKey != "" || m.formData.Model != "" || m.formData.WireAPI != "" || m.formData.EnvKey != "" || m.formData.ModelReasoningEffort != "" || m.formData.ClaudeDefaultHaikuModel != "" || m.formData.ClaudeDefaultOpusModel != "" || m.formData.ClaudeDefaultSonnetModel != ""
+	return m.formData.Name != "" || m.formData.Provider != "" || m.formData.BaseURL != "" || m.formData.APIKey != "" || m.formData.Model != "" || m.formData.WireAPI != "" || m.formData.EnvKey != "" || m.formData.ModelReasoningEffort != "" || m.formData.EffortLevel != "" || m.formData.ClaudeDefaultHaikuModel != "" || m.formData.ClaudeDefaultOpusModel != "" || m.formData.ClaudeDefaultSonnetModel != ""
 }
 
 func (m model) hasRequiredServiceFields() bool {
@@ -205,6 +206,11 @@ func (m model) addConfigView(serviceType string) string {
 			{t("field_reasoning"), m.formData.ModelReasoningEffort},
 		}
 	} else {
+		// 设置默认值
+		if m.formData.EffortLevel == "" {
+			m.formData.EffortLevel = DefaultClaudeEffortLevel
+		}
+
 		fields = []struct {
 			label string
 			value string
@@ -212,6 +218,7 @@ func (m model) addConfigView(serviceType string) string {
 			{t("field_name"), m.formData.Name},
 			{t("field_base_url"), m.formData.BaseURL},
 			{t("field_api_key"), m.formData.APIKey},
+			{t("field_effort_level"), m.formData.EffortLevel},
 			{t("field_haiku_model"), m.formData.ClaudeDefaultHaikuModel},
 			{t("field_opus_model"), m.formData.ClaudeDefaultOpusModel},
 			{t("field_sonnet_model"), m.formData.ClaudeDefaultSonnetModel},
@@ -259,6 +266,14 @@ func (m model) addConfigView(serviceType string) string {
 				displayValue = field.value
 			}
 		}
+		// 对于Claude推理强度字段，显示选择选项
+		if serviceType != "Codex" && i == 3 {
+			if m.formField == i {
+				displayValue = field.value + " " + t("hint_select")
+			} else {
+				displayValue = field.value
+			}
+		}
 
 		inner.WriteString(fmt.Sprintf("%s %s:%s %s\n", prefix, field.label, highlight, displayValue))
 	}
@@ -296,6 +311,11 @@ func (m model) editConfigView(serviceType string) string {
 			{t("field_reasoning"), m.formData.ModelReasoningEffort},
 		}
 	} else {
+		// 设置默认值
+		if m.formData.EffortLevel == "" {
+			m.formData.EffortLevel = DefaultClaudeEffortLevel
+		}
+
 		fields = []struct {
 			label string
 			value string
@@ -303,6 +323,7 @@ func (m model) editConfigView(serviceType string) string {
 			{t("field_name"), m.formData.Name},
 			{t("field_base_url"), m.formData.BaseURL},
 			{t("field_api_key"), m.formData.APIKey},
+			{t("field_effort_level"), m.formData.EffortLevel},
 			{t("field_haiku_model"), m.formData.ClaudeDefaultHaikuModel},
 			{t("field_opus_model"), m.formData.ClaudeDefaultOpusModel},
 			{t("field_sonnet_model"), m.formData.ClaudeDefaultSonnetModel},
@@ -351,10 +372,20 @@ func (m model) editConfigView(serviceType string) string {
 				displayValue = field.value
 			}
 		}
+		// 对于Claude推理强度字段，显示选择选项
+		if serviceType != "Codex" && i == 3 {
+			if m.formField == i {
+				displayValue = field.value + " " + t("hint_select")
+			} else {
+				displayValue = field.value
+			}
+		}
 
 		highlight := ""
 		if m.formField == i {
 			if serviceType == "Codex" && (i == FieldWireAPI || i == FieldAuthMethod || i == FieldModelReasoningEffort) { // Wire API、认证方式和推理强度字段
+				highlight = fieldHighlightStyle.Render(" " + t("hint_use_arrows"))
+			} else if serviceType != "Codex" && i == 3 {
 				highlight = fieldHighlightStyle.Render(" " + t("hint_use_arrows"))
 			} else {
 				highlight = fieldHighlightStyle.Render(" " + t("hint_input"))
