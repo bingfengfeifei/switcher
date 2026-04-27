@@ -271,7 +271,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.formData.EffortLevel = ModelReasoningEffortAuto
 				}
 			}
-	
+
 		case tea.KeyRight:
 			if m.state == claudeCodeList || m.state == codexList || m.state == droidList {
 				// 无论光标在哪，直接跳到新增按钮
@@ -326,7 +326,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.formData.EffortLevel = ModelReasoningEffortAuto
 				}
 			}
-	
+
 		case tea.KeyEnter:
 			// 在添加/编辑状态下，Enter直接保存
 			if m.state == addClaudeCode {
