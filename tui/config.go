@@ -457,6 +457,7 @@ func (c *Config) SwitchClaudeCode(config *ServiceConfig) error {
 			"ANTHROPIC_AUTH_TOKEN":                     config.APIKey,
 			"ANTHROPIC_BASE_URL":                       config.BaseURL,
 			"CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+			"CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR": "true",
 		},
 		Permissions: struct {
 			Allow []string `json:"allow"`
