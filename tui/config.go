@@ -445,6 +445,20 @@ func (c *Config) GetActiveCodex() *ServiceConfig {
 	return nil
 }
 
+// claudeSwitcherEnvKeys 是 switcher 负责管理的 env 变量集合。
+// 切换配置时，这些 key 会被新配置的值覆盖；新配置中未提供值的 key 会从 env 中移除，
+// 避免上一个配置的残留值泄漏到新配置中。env 中其他 key（用户手动添加的）保持不变。
+var claudeSwitcherEnvKeys = []string{
+	"ANTHROPIC_AUTH_TOKEN",
+	"ANTHROPIC_BASE_URL",
+	"ANTHROPIC_DEFAULT_HAIKU_MODEL",
+	"ANTHROPIC_DEFAULT_OPUS_MODEL",
+	"ANTHROPIC_DEFAULT_SONNET_MODEL",
+	"ANTHROPIC_EFFORT_LEVEL",
+	"CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
+	"CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR",
+}
+
 func (c *Config) SwitchClaudeCode(config *ServiceConfig) error {
 	if config == nil {
 		return fmt.Errorf("config cannot be nil")
@@ -452,40 +466,59 @@ func (c *Config) SwitchClaudeCode(config *ServiceConfig) error {
 
 	settingsPath := filepath.Join(platformPaths.GetClaudeConfigDir(), "settings.json")
 
-	settings := ClaudeSettings{
-		Env: map[string]string{
-			"ANTHROPIC_AUTH_TOKEN":                     config.APIKey,
-			"ANTHROPIC_BASE_URL":                       config.BaseURL,
-			"CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
-			"CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR": "true",
-		},
-		Permissions: struct {
-			Allow []string `json:"allow"`
-			Deny  []string `json:"deny"`
-		}{
-			Allow: []string{},
-			Deny:  []string{},
-		},
-		AlwaysThinkingEnabled: false,
+	// 读取现有 settings.json，保留 enabledPlugins / extraKnownMarketplaces 等
+	// switcher 不管理的字段。读不到或解析失败时从空 settings 开始。
+	settings := make(map[string]interface{})
+	if data, err := os.ReadFile(settingsPath); err == nil {
+		if err := json.Unmarshal(data, &settings); err != nil {
+			settings = make(map[string]interface{})
+		}
 	}
 
-	// 设置默认模型环境变量
+	// 准备本次切换需要写入的 env 值
+	newEnv := map[string]string{
+		"ANTHROPIC_AUTH_TOKEN":                     config.APIKey,
+		"ANTHROPIC_BASE_URL":                       config.BaseURL,
+		"CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+		"CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR": "true",
+	}
 	if config.ClaudeDefaultHaikuModel != "" {
-		settings.Env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = config.ClaudeDefaultHaikuModel
+		newEnv["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = config.ClaudeDefaultHaikuModel
 	}
 	if config.ClaudeDefaultOpusModel != "" {
-		settings.Env["ANTHROPIC_DEFAULT_OPUS_MODEL"] = config.ClaudeDefaultOpusModel
+		newEnv["ANTHROPIC_DEFAULT_OPUS_MODEL"] = config.ClaudeDefaultOpusModel
 	}
 	if config.ClaudeDefaultSonnetModel != "" {
-		settings.Env["ANTHROPIC_DEFAULT_SONNET_MODEL"] = config.ClaudeDefaultSonnetModel
+		newEnv["ANTHROPIC_DEFAULT_SONNET_MODEL"] = config.ClaudeDefaultSonnetModel
 	}
-
-	// 设置推理强度环境变量
 	effortLevel := config.EffortLevel
 	if effortLevel == "" {
 		effortLevel = DefaultClaudeEffortLevel
 	}
-	settings.Env["ANTHROPIC_EFFORT_LEVEL"] = effortLevel
+	newEnv["ANTHROPIC_EFFORT_LEVEL"] = effortLevel
+
+	// 合并到现有 env：清掉 switcher 管理的旧 key，再写入新值，保留用户其他 key
+	mergedEnv := map[string]interface{}{}
+	if existing, ok := settings["env"].(map[string]interface{}); ok {
+		for k, v := range existing {
+			mergedEnv[k] = v
+		}
+	}
+	for _, k := range claudeSwitcherEnvKeys {
+		delete(mergedEnv, k)
+	}
+	for k, v := range newEnv {
+		mergedEnv[k] = v
+	}
+	settings["env"] = mergedEnv
+
+	// 确保 permissions 至少存在一个合法结构（首次创建时需要）
+	if _, ok := settings["permissions"]; !ok {
+		settings["permissions"] = map[string]interface{}{
+			"allow": []string{},
+			"deny":  []string{},
+		}
+	}
 
 	data, err := json.MarshalIndent(settings, "", "  ")
 	if err != nil {
