@@ -110,33 +110,6 @@ type ClaudeSettings struct {
 	AlwaysThinkingEnabled bool `json:"alwaysThinkingEnabled"`
 }
 
-type CodexConfig struct {
-	ModelProvider          string                    `toml:"model_provider"`
-	Model                  string                    `toml:"model"`
-	ModelReasoningEffort   string                    `toml:"model_reasoning_effort"`
-	DisableResponseStorage bool                      `toml:"disable_response_storage"`
-	ModelProviders         map[string]CodexProvider  `toml:"model_providers"`
-	Projects               map[string]CodexProject   `toml:"projects"`
-	MCPServers             map[string]CodexMCPServer `toml:"mcp_servers"`
-}
-
-type CodexProvider struct {
-	Name               string `toml:"name"`
-	BaseURL            string `toml:"base_url"`
-	WireAPI            string `toml:"wire_api"`
-	EnvKey             string `toml:"env_key"`
-	RequiresOpenAIAuth bool   `toml:"requires_openai_auth"`
-}
-
-type CodexProject struct {
-	TrustLevel string `toml:"trust_level"`
-}
-
-type CodexMCPServer struct {
-	Command string   `toml:"command"`
-	Args    []string `toml:"args"`
-}
-
 type CodexAuth struct {
 	OPENAI_API_KEY string `json:"OPENAI_API_KEY"`
 }
@@ -538,6 +511,11 @@ func (c *Config) SwitchCodex(config *ServiceConfig) error {
 		return fmt.Errorf("config cannot be nil")
 	}
 
+	providerName := config.Provider
+	if !isValidTomlSectionName(providerName) {
+		return fmt.Errorf("invalid provider name %q: must contain only letters, digits, underscores, and hyphens", providerName)
+	}
+
 	codexDir := platformPaths.GetCodexConfigDir()
 	if err := mkdirWithPerms(codexDir, 0755); err != nil {
 		return fmt.Errorf("failed to create .codex directory: %w", err)
@@ -547,55 +525,52 @@ func (c *Config) SwitchCodex(config *ServiceConfig) error {
 	auth := CodexAuth{
 		OPENAI_API_KEY: config.APIKey,
 	}
-
 	authData, err := json.Marshal(auth)
 	if err != nil {
 		return fmt.Errorf("failed to marshal Codex auth: %w", err)
 	}
-
 	authPath := filepath.Join(codexDir, "auth.json")
 	if err := writeFileWithPerms(authPath, authData, 0644); err != nil {
 		return fmt.Errorf("failed to write auth.json: %w", err)
 	}
 
-	// Read existing config.toml to preserve other settings
+	// Read existing config.toml as raw text
 	configPath := filepath.Join(codexDir, "config.toml")
-	existingConfig := c.loadCodexConfig(configPath)
-
-	// Update provider settings
-	if existingConfig.ModelProviders == nil {
-		existingConfig.ModelProviders = make(map[string]CodexProvider)
+	content := ""
+	if data, err := os.ReadFile(configPath); err != nil {
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("failed to read config.toml: %w", err)
+		}
+		content = defaultCodexConfigTOML()
+	} else {
+		content = strings.ReplaceAll(string(data), "\r\n", "\n")
+	}
+	if strings.TrimSpace(content) == "" {
+		content = defaultCodexConfigTOML()
 	}
 
-	providerName := config.Provider
-
-	// Set model if specified, otherwise use existing or default
+	// Resolve values with fallbacks
 	model := config.Model
 	if model == "" {
-		model = existingConfig.Model
-		if model == "" {
+		if v, ok := readTomlKey(content, "model"); ok && v != "" {
+			model = v
+		} else {
 			model = DefaultCodexModel
 		}
 	}
-	existingConfig.Model = model
-
-	// Set wire_api if specified, otherwise use existing or default
+	modelReasoningEffort := config.ModelReasoningEffort
+	if modelReasoningEffort == "" {
+		if v, ok := readTomlKey(content, "model_reasoning_effort"); ok && v != "" {
+			modelReasoningEffort = v
+		} else {
+			modelReasoningEffort = DefaultModelReasoningEffort
+		}
+	}
 	wireAPI := config.WireAPI
 	if wireAPI == "" {
 		wireAPI = DefaultWireAPI
 	}
 
-	// Set model_reasoning_effort if specified, otherwise use existing or default
-	modelReasoningEffort := config.ModelReasoningEffort
-	if modelReasoningEffort == "" {
-		modelReasoningEffort = existingConfig.ModelReasoningEffort
-		if modelReasoningEffort == "" {
-			modelReasoningEffort = DefaultModelReasoningEffort
-		}
-	}
-	existingConfig.ModelReasoningEffort = modelReasoningEffort
-
-	// Set env_key only for env auth method
 	envKey := ""
 	if config.AuthMethod == "env" {
 		envKey = config.EnvKey
@@ -604,206 +579,177 @@ func (c *Config) SwitchCodex(config *ServiceConfig) error {
 		}
 	}
 
-	existingConfig.ModelProviders[providerName] = CodexProvider{
-		Name:               providerName,
-		BaseURL:            config.BaseURL,
-		WireAPI:            wireAPI,
-		EnvKey:             envKey,
-		RequiresOpenAIAuth: true,
+	// Surgically update only the keys switcher manages
+	content = updateTomlKey(content, "model_provider", fmt.Sprintf(`"%s"`, escapeTomlString(providerName)))
+	content = updateTomlKey(content, "model", fmt.Sprintf(`"%s"`, escapeTomlString(model)))
+	content = updateTomlKey(content, "model_reasoning_effort", fmt.Sprintf(`"%s"`, escapeTomlString(modelReasoningEffort)))
+
+	// Update or add the provider section
+	sectionBody := fmt.Sprintf(`name = "%s"
+base_url = "%s"
+wire_api = "%s"`, escapeTomlString(providerName), escapeTomlString(config.BaseURL), escapeTomlString(wireAPI))
+	if envKey != "" {
+		sectionBody += fmt.Sprintf("\nenv_key = \"%s\"", escapeTomlString(envKey))
+	}
+	sectionBody += fmt.Sprintf("\nrequires_openai_auth = %t", true)
+	content = updateOrAddTomlSection(content, fmt.Sprintf("model_providers.%s", providerName), sectionBody)
+
+	// Write back
+	if err := writeFileWithPerms(configPath, []byte(content), 0644); err != nil {
+		return fmt.Errorf("failed to write config.toml: %w", err)
 	}
 
-	// Set as active provider
-	existingConfig.ModelProvider = providerName
-
-	// Write updated config.toml
-	tomlContent := c.generateCodexConfigTOML(existingConfig)
-	if err := writeFileWithPerms(configPath, []byte(tomlContent), 0644); err != nil {
-		return err
-	}
-
-	// Set environment variable in shell configurations based on AuthMethod
+	// Set environment variable for env auth method
 	authMethod := config.AuthMethod
 	if authMethod == "" {
 		authMethod = "auth.json"
 	}
-
 	if authMethod == "env" {
-		provider := existingConfig.ModelProviders[providerName]
-		if provider.EnvKey == "" {
-			provider.EnvKey = DefaultEnvKey
-		}
-		return shellManager.SetEnvVar(provider.EnvKey, config.APIKey)
+		return shellManager.SetEnvVar(envKey, config.APIKey)
 	}
 
 	return nil
 }
 
-func (c *Config) loadCodexConfig(path string) CodexConfig {
-	config := CodexConfig{
-		ModelProvider:          "openai",
-		Model:                  DefaultCodexModel,
-		ModelReasoningEffort:   DefaultModelReasoningEffort,
-		DisableResponseStorage: false,
-		ModelProviders:         make(map[string]CodexProvider),
-		Projects:               make(map[string]CodexProject),
-		MCPServers:             make(map[string]CodexMCPServer),
+// readTomlKey reads a top-level string value from TOML content.
+// Returns the value and true if found, or ("", false) if not found.
+func readTomlKey(content, key string) (string, bool) {
+	for _, line := range strings.Split(content, "\n") {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "#") {
+			continue
+		}
+		if strings.HasPrefix(trimmed, "[") {
+			break
+		}
+		if strings.HasPrefix(trimmed, key) {
+			afterKey := strings.TrimSpace(trimmed[len(key):])
+			if strings.HasPrefix(afterKey, "=") {
+				val := strings.TrimSpace(afterKey[1:])
+				// Strip inline comment
+				if ci := strings.Index(val, " #"); ci != -1 {
+					val = strings.TrimSpace(val[:ci])
+				}
+				return strings.Trim(val, `"`), true
+			}
+		}
 	}
+	return "", false
+}
 
-	if data, err := os.ReadFile(path); err == nil {
-		// Simple TOML parsing - preserve existing settings including MCP servers
-		lines := strings.Split(string(data), "\n")
-		currentMCP := ""
-		for _, raw := range lines {
-			line := strings.TrimSpace(raw)
-			if line == "" || strings.HasPrefix(line, "#") {
-				continue
+// updateTomlKey replaces or adds a top-level key in TOML content.
+func updateTomlKey(content, key, value string) string {
+	lines := strings.Split(content, "\n")
+	found := false
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "#") {
+			continue
+		}
+		if strings.HasPrefix(trimmed, "[") {
+			break
+		}
+		if strings.HasPrefix(trimmed, key) {
+			afterKey := strings.TrimSpace(trimmed[len(key):])
+			if strings.HasPrefix(afterKey, "=") {
+				lines[i] = key + " = " + value
+				found = true
+				break
 			}
-			// Handle section headers
-			if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
-				currentMCP = ""
-				if strings.HasPrefix(line, "[projects.") {
-					if idx := strings.Index(line, "]"); idx != -1 {
-						projectPath := strings.TrimSpace(line[10:idx])
-						if projectPath != "" {
-							if _, ok := config.Projects[projectPath]; !ok {
-								config.Projects[projectPath] = CodexProject{TrustLevel: "trusted"}
-							}
-						}
-					}
-				} else if strings.HasPrefix(line, "[mcp_servers.") {
-					if idx := strings.Index(line, "]"); idx != -1 {
-						serverName := strings.TrimSpace(line[13:idx])
-						if serverName != "" {
-							currentMCP = serverName
-							if _, ok := config.MCPServers[serverName]; !ok {
-								config.MCPServers[serverName] = CodexMCPServer{Command: "npx", Args: []string{}}
-							}
-						}
-					}
-				}
-				continue
-			}
+		}
+	}
+	if found {
+		return strings.Join(lines, "\n")
+	}
+	// Insert before first section header
+	insertIdx := len(lines)
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "#") {
+			continue
+		}
+		if strings.HasPrefix(trimmed, "[") {
+			insertIdx = i
+			break
+		}
+	}
+	result := make([]string, 0, len(lines)+1)
+	result = append(result, lines[:insertIdx]...)
+	result = append(result, key+" = "+value)
+	result = append(result, lines[insertIdx:]...)
+	return strings.Join(result, "\n")
+}
 
-			// Top-level keys
-			if strings.HasPrefix(line, "model = ") {
-				config.Model = strings.Trim(strings.TrimSpace(line[len("model = "):]), `"`)
-				continue
-			}
-			if strings.HasPrefix(line, "model_reasoning_effort = ") {
-				config.ModelReasoningEffort = strings.Trim(strings.TrimSpace(line[len("model_reasoning_effort = "):]), `"`)
-				continue
-			}
-			if strings.HasPrefix(line, "disable_response_storage = ") {
-				config.DisableResponseStorage = strings.Contains(line, "true")
-				continue
-			}
+// updateOrAddTomlSection replaces or appends a TOML section.
+func updateOrAddTomlSection(content, sectionName, sectionBody string) string {
+	header := "[" + sectionName + "]"
+	lines := strings.Split(content, "\n")
 
-			// Inside MCP server block
-			if currentMCP != "" {
-				srv := config.MCPServers[currentMCP]
-				if strings.HasPrefix(line, "command = ") {
-					srv.Command = strings.Trim(strings.TrimSpace(line[len("command = "):]), `"`)
-					config.MCPServers[currentMCP] = srv
-					continue
-				}
-				if strings.HasPrefix(line, "args = ") {
-					argsPart := strings.TrimSpace(line[len("args = "):])
-					srv.Args = parseTomlStringArray(argsPart)
-					config.MCPServers[currentMCP] = srv
-					continue
-				}
+	// Find existing section
+	startIdx := -1
+	endIdx := len(lines)
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == header {
+			startIdx = i
+			continue
+		}
+		if startIdx != -1 && i > startIdx {
+			if strings.HasPrefix(trimmed, "[") {
+				endIdx = i
+				break
 			}
 		}
 	}
 
-	return config
+	newSection := header + "\n" + sectionBody + "\n"
+
+	if startIdx != -1 {
+		// Replace existing section
+		result := make([]string, 0, len(lines)-(endIdx-startIdx)+3)
+		result = append(result, lines[:startIdx]...)
+		result = append(result, newSection)
+		result = append(result, lines[endIdx:]...)
+		return strings.Join(result, "\n")
+	}
+
+	// Append new section at end
+	content = strings.TrimRight(content, "\n") + "\n\n" + newSection
+	return content
 }
 
-func (c *Config) generateCodexConfigTOML(config CodexConfig) string {
-	toml := fmt.Sprintf(`model_provider = "%s"
+// escapeTomlString escapes special characters in a TOML string value.
+func escapeTomlString(s string) string {
+	s = strings.ReplaceAll(s, `\`, `\\`)
+	s = strings.ReplaceAll(s, `"`, `\"`)
+	s = strings.ReplaceAll(s, "\n", `\n`)
+	s = strings.ReplaceAll(s, "\r", `\r`)
+	s = strings.ReplaceAll(s, "\t", `\t`)
+	return s
+}
+
+// isValidTomlSectionName checks that a name is safe to use in a TOML section header.
+func isValidTomlSectionName(name string) bool {
+	if name == "" {
+		return false
+	}
+	for _, c := range name {
+		if !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_' || c == '-') {
+			return false
+		}
+	}
+	return true
+}
+
+// defaultCodexConfigTOML returns a minimal config for new installations.
+func defaultCodexConfigTOML() string {
+	return fmt.Sprintf(`model_provider = "openai"
 model = "%s"
 model_reasoning_effort = "%s"
-disable_response_storage = %t
-
-`, config.ModelProvider, config.Model, config.ModelReasoningEffort, config.DisableResponseStorage)
-
-	for name, provider := range config.ModelProviders {
-		toml += fmt.Sprintf(`
-[model_providers.%s]
-name = "%s"
-base_url = "%s"
-wire_api = "%s"
-`, name, provider.Name, provider.BaseURL, provider.WireAPI)
-		// Only add env_key if it's not empty
-		if provider.EnvKey != "" {
-			toml += fmt.Sprintf(`env_key = "%s"
-`, provider.EnvKey)
-		}
-		toml += fmt.Sprintf(`requires_openai_auth = %t
-`, provider.RequiresOpenAIAuth)
-	}
-
-	for path, project := range config.Projects {
-		toml += fmt.Sprintf(`
-[projects.%s]
-trust_level = "%s"
-`, path, project.TrustLevel)
-	}
-
-	for name, server := range config.MCPServers {
-		toml += fmt.Sprintf(`
-[mcp_servers.%s]
-args = %s
-command = "%s"
-`, name, serverToTomlArray(server.Args), server.Command)
-	}
-
-	return toml
+disable_response_storage = false
+`, DefaultCodexModel, DefaultModelReasoningEffort)
 }
 
-// parseTomlStringArray parses a TOML array of strings like ["a", "b"].
-func parseTomlStringArray(s string) []string {
-	s = strings.TrimSpace(s)
-	start := strings.Index(s, "[")
-	end := strings.LastIndex(s, "]")
-	if start == -1 || end == -1 || end <= start {
-		return []string{}
-	}
-	inner := strings.TrimSpace(s[start+1 : end])
-	if inner == "" {
-		return []string{}
-	}
-	parts := strings.Split(inner, ",")
-	out := make([]string, 0, len(parts))
-	for _, p := range parts {
-		p = strings.TrimSpace(p)
-		p = strings.Trim(p, `"`)
-		if p != "" {
-			out = append(out, p)
-		}
-	}
-	return out
-}
-
-// serverToTomlArray formats []string as a TOML string array.
-func serverToTomlArray(args []string) string {
-	if len(args) == 0 {
-		return "[]"
-	}
-	b := strings.Builder{}
-	b.WriteString("[")
-	for i, a := range args {
-		if i > 0 {
-			b.WriteString(", ")
-		}
-		a = strings.ReplaceAll(a, "\"", "\\\"")
-		b.WriteString("\"")
-		b.WriteString(a)
-		b.WriteString("\"")
-	}
-	b.WriteString("]")
-	return b.String()
-}
 
 // Droid configuration management methods
 func (c *Config) AddDroidConfig(config DroidConfig) error {
