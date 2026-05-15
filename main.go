@@ -4,13 +4,14 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"runtime/debug"
 
 	tui "github.com/bingfengfeifei/switcher/tui"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// Version information, set by GoReleaser at build time
+// Version information, set by ldflags at build time
 var (
 	version = "dev"
 	commit  = "none"
@@ -19,6 +20,30 @@ var (
 )
 
 func init() {
+	// Fallback to runtime/debug build info when ldflags aren't set (e.g. go install)
+	if version == "dev" {
+		if info, ok := debug.ReadBuildInfo(); ok {
+			if v := info.Main.Version; v != "" && v != "(devel)" {
+				version = v
+			}
+			for _, s := range info.Settings {
+				switch s.Key {
+				case "vcs.revision":
+					if commit == "none" {
+						if len(s.Value) > 7 {
+							commit = s.Value[:7]
+						} else {
+							commit = s.Value
+						}
+					}
+				case "vcs.time":
+					if date == "unknown" {
+						date = s.Value
+					}
+				}
+			}
+		}
+	}
 	// 设置版本信息到tui包
 	tui.AppVersion = version
 }
