@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -34,7 +35,8 @@ const (
 
 // Claude Code effort level constants
 const (
-	DefaultClaudeEffortLevel = "auto"
+	DefaultClaudeEffortLevel    = "auto"
+	DefaultClaudeAutocompactPct = "70"
 )
 
 var claudeEffortLevels = []string{
@@ -73,6 +75,7 @@ type ServiceConfig struct {
 	ClaudeDefaultOpusModel   string `json:"claude_default_opus_model,omitempty"`
 	ClaudeDefaultSonnetModel string `json:"claude_default_sonnet_model,omitempty"`
 	EffortLevel              string `json:"effort_level,omitempty"`
+	AutocompactPctOverride   string `json:"autocompact_pct_override,omitempty"`
 }
 
 type DroidConfig struct {
@@ -430,6 +433,9 @@ var claudeSwitcherEnvKeys = []string{
 	"ANTHROPIC_EFFORT_LEVEL",
 	"CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
 	"CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR",
+	"DISABLE_TELEMETRY",
+	"DO_NOT_TRACK",
+	"CLAUDE_AUTOCOMPACT_PCT_OVERRIDE",
 }
 
 func (c *Config) SwitchClaudeCode(config *ServiceConfig) error {
@@ -454,6 +460,8 @@ func (c *Config) SwitchClaudeCode(config *ServiceConfig) error {
 		"ANTHROPIC_BASE_URL":                       config.BaseURL,
 		"CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
 		"CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR": "true",
+		"DISABLE_TELEMETRY":                        "1",
+		"DO_NOT_TRACK":                             "1",
 	}
 	if config.ClaudeDefaultHaikuModel != "" {
 		newEnv["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = config.ClaudeDefaultHaikuModel
@@ -469,6 +477,15 @@ func (c *Config) SwitchClaudeCode(config *ServiceConfig) error {
 		effortLevel = DefaultClaudeEffortLevel
 	}
 	newEnv["ANTHROPIC_EFFORT_LEVEL"] = effortLevel
+
+	// 自动压缩阈值：默认 70%（更早压缩），配置了 1-100 的合法值时使用配置值
+	autocompactPct := config.AutocompactPctOverride
+	if autocompactPct == "" {
+		autocompactPct = DefaultClaudeAutocompactPct
+	}
+	if n, err := strconv.Atoi(autocompactPct); err == nil && n >= 1 && n <= 100 {
+		newEnv["CLAUDE_AUTOCOMPACT_PCT_OVERRIDE"] = autocompactPct
+	}
 
 	// 合并到现有 env：清掉 switcher 管理的旧 key，再写入新值，保留用户其他 key
 	mergedEnv := map[string]interface{}{}
@@ -749,7 +766,6 @@ model_reasoning_effort = "%s"
 disable_response_storage = false
 `, DefaultCodexModel, DefaultModelReasoningEffort)
 }
-
 
 // Droid configuration management methods
 func (c *Config) AddDroidConfig(config DroidConfig) error {

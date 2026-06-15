@@ -701,7 +701,7 @@ func (m model) getMaxCursor() int {
 		return len(m.sortedDroid) + 1 // 配置数量 + 新增按钮
 	// 操作菜单已移除，保存/取消按钮已移除
 	case addClaudeCode, editClaudeCode:
-		return ClaudeCodeFieldCount - 1 // 字段 0..6
+		return ClaudeCodeFieldCount - 1 // 字段 0..7
 	case addDroid, editDroid:
 		return DroidFieldCount - 1 // 字段 0..3
 	case addCodex, editCodex:
@@ -1114,6 +1114,13 @@ func (m model) handleInput(char string) (tea.Model, tea.Cmd) {
 			m.formData.ClaudeDefaultOpusModel += s
 		case 6:
 			m.formData.ClaudeDefaultSonnetModel += s
+		case 7:
+			// 自动压缩阈值：仅接受数字字符，1-100 的范围在写入 settings.json 时校验
+			for _, r := range s {
+				if r >= '0' && r <= '9' {
+					m.formData.AutocompactPctOverride += string(r)
+				}
+			}
 		}
 		return m, nil
 	}
@@ -1200,6 +1207,11 @@ func (m model) handleBackspace() (tea.Model, tea.Cmd) {
 			if len(m.formData.ClaudeDefaultSonnetModel) > 0 {
 				r := []rune(m.formData.ClaudeDefaultSonnetModel)
 				m.formData.ClaudeDefaultSonnetModel = string(r[:len(r)-1])
+			}
+		case 7:
+			if len(m.formData.AutocompactPctOverride) > 0 {
+				r := []rune(m.formData.AutocompactPctOverride)
+				m.formData.AutocompactPctOverride = string(r[:len(r)-1])
 			}
 		}
 		return m, nil
