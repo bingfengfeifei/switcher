@@ -56,6 +56,9 @@ var translations = map[string]map[string]string{
 		"field_opus_model":      "Opus 模型",
 		"field_sonnet_model":    "Sonnet 模型",
 		"field_autocompact_pct": "自动压缩阈值 (%)",
+		"field_http_proxy":     "HTTP 代理",
+		"field_https_proxy":    "HTTPS 代理",
+		"field_no_proxy":       "不代理地址",
 
 		// Form hints
 		"hint_select":         "(←/→选择)",
@@ -183,6 +186,9 @@ var translations = map[string]map[string]string{
 		"field_opus_model":      "Opus Model",
 		"field_sonnet_model":    "Sonnet Model",
 		"field_autocompact_pct": "Autocompact Pct (%)",
+		"field_http_proxy":     "HTTP Proxy",
+		"field_https_proxy":    "HTTPS Proxy",
+		"field_no_proxy":       "No Proxy",
 
 		// Form hints
 		"hint_select":         "(←/→ select)",

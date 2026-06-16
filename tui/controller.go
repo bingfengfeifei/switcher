@@ -1121,6 +1121,12 @@ func (m model) handleInput(char string) (tea.Model, tea.Cmd) {
 					m.formData.AutocompactPctOverride += string(r)
 				}
 			}
+		case 8:
+			m.formData.HTTPProxy += s
+		case 9:
+			m.formData.HTTPSProxy += s
+		case 10:
+			m.formData.NOProxy += s
 		}
 		return m, nil
 	}
@@ -1212,6 +1218,21 @@ func (m model) handleBackspace() (tea.Model, tea.Cmd) {
 			if len(m.formData.AutocompactPctOverride) > 0 {
 				r := []rune(m.formData.AutocompactPctOverride)
 				m.formData.AutocompactPctOverride = string(r[:len(r)-1])
+			}
+		case 8:
+			if len(m.formData.HTTPProxy) > 0 {
+				r := []rune(m.formData.HTTPProxy)
+				m.formData.HTTPProxy = string(r[:len(r)-1])
+			}
+		case 9:
+			if len(m.formData.HTTPSProxy) > 0 {
+				r := []rune(m.formData.HTTPSProxy)
+				m.formData.HTTPSProxy = string(r[:len(r)-1])
+			}
+		case 10:
+			if len(m.formData.NOProxy) > 0 {
+				r := []rune(m.formData.NOProxy)
+				m.formData.NOProxy = string(r[:len(r)-1])
 			}
 		}
 		return m, nil

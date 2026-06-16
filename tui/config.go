@@ -76,6 +76,9 @@ type ServiceConfig struct {
 	ClaudeDefaultSonnetModel string `json:"claude_default_sonnet_model,omitempty"`
 	EffortLevel              string `json:"effort_level,omitempty"`
 	AutocompactPctOverride   string `json:"autocompact_pct_override,omitempty"`
+	HTTPProxy                string `json:"http_proxy,omitempty"`
+	HTTPSProxy               string `json:"https_proxy,omitempty"`
+	NOProxy                  string `json:"no_proxy,omitempty"`
 }
 
 type DroidConfig struct {
@@ -436,6 +439,9 @@ var claudeSwitcherEnvKeys = []string{
 	"DISABLE_TELEMETRY",
 	"DO_NOT_TRACK",
 	"CLAUDE_AUTOCOMPACT_PCT_OVERRIDE",
+	"HTTP_PROXY",
+	"HTTPS_PROXY",
+	"NO_PROXY",
 }
 
 func (c *Config) SwitchClaudeCode(config *ServiceConfig) error {
@@ -485,6 +491,17 @@ func (c *Config) SwitchClaudeCode(config *ServiceConfig) error {
 	}
 	if n, err := strconv.Atoi(autocompactPct); err == nil && n >= 1 && n <= 100 {
 		newEnv["CLAUDE_AUTOCOMPACT_PCT_OVERRIDE"] = autocompactPct
+	}
+
+	// 代理设置：仅在配置了值时写入
+	if config.HTTPProxy != "" {
+		newEnv["HTTP_PROXY"] = config.HTTPProxy
+	}
+	if config.HTTPSProxy != "" {
+		newEnv["HTTPS_PROXY"] = config.HTTPSProxy
+	}
+	if config.NOProxy != "" {
+		newEnv["NO_PROXY"] = config.NOProxy
 	}
 
 	// 合并到现有 env：清掉 switcher 管理的旧 key，再写入新值，保留用户其他 key

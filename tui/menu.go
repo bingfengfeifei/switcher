@@ -22,7 +22,7 @@ const (
 
 // 配置类型字段数量
 const (
-	ClaudeCodeFieldCount = 8 // Name, BaseURL, APIKey, EffortLevel, HaikuModel, OpusModel, SonnetModel, AutocompactPct
+	ClaudeCodeFieldCount = 11 // Name, BaseURL, APIKey, EffortLevel, HaikuModel, OpusModel, SonnetModel, AutocompactPct, HTTPProxy, HTTPSProxy, NOProxy
 	CodexFieldCount      = 7 // Name, BaseURL, APIKey, Model, WireAPI, AuthMethod, Reasoning
 	DroidFieldCount      = 4
 )
@@ -69,7 +69,7 @@ type model struct {
 }
 
 func (m model) hasFormContent() bool {
-	return m.formData.Name != "" || m.formData.Provider != "" || m.formData.BaseURL != "" || m.formData.APIKey != "" || m.formData.Model != "" || m.formData.WireAPI != "" || m.formData.EnvKey != "" || m.formData.ModelReasoningEffort != "" || m.formData.EffortLevel != "" || m.formData.ClaudeDefaultHaikuModel != "" || m.formData.ClaudeDefaultOpusModel != "" || m.formData.ClaudeDefaultSonnetModel != "" || m.formData.AutocompactPctOverride != ""
+	return m.formData.Name != "" || m.formData.Provider != "" || m.formData.BaseURL != "" || m.formData.APIKey != "" || m.formData.Model != "" || m.formData.WireAPI != "" || m.formData.EnvKey != "" || m.formData.ModelReasoningEffort != "" || m.formData.EffortLevel != "" || m.formData.ClaudeDefaultHaikuModel != "" || m.formData.ClaudeDefaultOpusModel != "" || m.formData.ClaudeDefaultSonnetModel != "" || m.formData.AutocompactPctOverride != "" || m.formData.HTTPProxy != "" || m.formData.HTTPSProxy != "" || m.formData.NOProxy != ""
 }
 
 func (m model) hasRequiredServiceFields() bool {
@@ -226,6 +226,9 @@ func (m model) addConfigView(serviceType string) string {
 			{t("field_opus_model"), m.formData.ClaudeDefaultOpusModel},
 			{t("field_sonnet_model"), m.formData.ClaudeDefaultSonnetModel},
 			{t("field_autocompact_pct"), m.formData.AutocompactPctOverride},
+			{t("field_http_proxy"), m.formData.HTTPProxy},
+			{t("field_https_proxy"), m.formData.HTTPSProxy},
+			{t("field_no_proxy"), m.formData.NOProxy},
 		}
 	}
 
@@ -335,6 +338,9 @@ func (m model) editConfigView(serviceType string) string {
 			{t("field_opus_model"), m.formData.ClaudeDefaultOpusModel},
 			{t("field_sonnet_model"), m.formData.ClaudeDefaultSonnetModel},
 			{t("field_autocompact_pct"), m.formData.AutocompactPctOverride},
+			{t("field_http_proxy"), m.formData.HTTPProxy},
+			{t("field_https_proxy"), m.formData.HTTPSProxy},
+			{t("field_no_proxy"), m.formData.NOProxy},
 		}
 	}
 
