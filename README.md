@@ -1,3 +1,5 @@
+
+
 # 🔄 Switcher
 
 <div align="center">
@@ -249,7 +251,7 @@ switcher/
 - **Shell Manager** (`tui/shell.go`) - Cross-platform environment variable management (bash/zsh/fish/PowerShell)
 - **TUI Controller** (`tui/controller.go`) - Central event handling, state transitions, and keyboard input processing
 - **TUI Menu System** (`tui/menu.go`) - State management, model structure, and view routing
-- **Service Components** (`tui/*code*.go`) - List views and specialized logic for each service
+- **Service Components** (`tui/claudecode.go`, `tui/codex.go`, and `tui/droid.go`) - List views and specialized logic for each service
 - **Style System** (`tui/style.go`) - Styling library using Lipgloss
 - **CLI Interface** (`main.go`) - Command-line switching functionality and TUI initialization
 
