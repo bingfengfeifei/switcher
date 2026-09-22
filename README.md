@@ -131,6 +131,7 @@ Navigate the beautiful TUI with:
 - **↑/↓** or **j/k** - Navigate menu items
 - **Enter** - Select/confirm action
 - **Tab** - Switch between form fields
+- **C** - Copy the selected configuration
 - **Esc** - Go back/exit
 - **q** - Quit application
 

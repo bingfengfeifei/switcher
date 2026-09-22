@@ -216,6 +216,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.cursor = 4
 					m.error = ""
 				}
+			case 'c', 'C':
+				if m.state == claudeCodeList || m.state == codexList || m.state == droidList {
+					return m.handleCopy()
+				}
 			}
 		case tea.KeyLeft:
 			if m.state == claudeCodeList || m.state == codexList || m.state == droidList {
@@ -711,6 +715,62 @@ func (m model) getMaxCursor() int {
 	default:
 		return 0
 	}
+}
+
+func (m model) handleCopy() (tea.Model, tea.Cmd) {
+	var err error
+
+	switch m.state {
+	case claudeCodeList:
+		if m.cursor < 0 || m.cursor >= len(m.sortedClaudeCode) {
+			return m, nil
+		}
+		index := findConfigIndex(m.config.ClaudeCode, m.sortedClaudeCode[m.cursor])
+		if index == -1 {
+			m.error = t("error_config_index")
+			return m, nil
+		}
+		err = m.config.CopyClaudeCodeConfig(index)
+	case codexList:
+		if m.cursor < 0 || m.cursor >= len(m.sortedCodex) {
+			return m, nil
+		}
+		index := findConfigIndex(m.config.Codex, m.sortedCodex[m.cursor])
+		if index == -1 {
+			m.error = t("error_config_index")
+			return m, nil
+		}
+		err = m.config.CopyCodexConfig(index)
+	case droidList:
+		if m.cursor < 0 || m.cursor >= len(m.sortedDroid) {
+			return m, nil
+		}
+		index := findDroidConfigIndex(m.config.Droid, m.sortedDroid[m.cursor])
+		if index == -1 {
+			m.error = t("error_config_index")
+			return m, nil
+		}
+		err = m.config.CopyDroidConfig(index)
+	default:
+		return m, nil
+	}
+
+	if err != nil {
+		m.error = err.Error()
+		return m, nil
+	}
+
+	m.error = t("success_copy")
+	m.cursor = 0
+	switch m.state {
+	case claudeCodeList:
+		m.sortClaudeCodeConfigs()
+	case codexList:
+		m.sortCodexConfigs()
+	case droidList:
+		m.sortDroidConfigs()
+	}
+	return m, nil
 }
 
 func (m model) handleSelect() (tea.Model, tea.Cmd) {

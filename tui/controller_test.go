@@ -1,10 +1,40 @@
 package tui
 
 import (
+	"path/filepath"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
+
+type copyTestPaths struct {
+	root string
+}
+
+func (paths copyTestPaths) GetAppConfigPath() string {
+	return filepath.Join(paths.root, "config.json")
+}
+
+func (paths copyTestPaths) GetClaudeConfigDir() string {
+	return filepath.Join(paths.root, "claude")
+}
+
+func (paths copyTestPaths) GetCodexConfigDir() string {
+	return filepath.Join(paths.root, "codex")
+}
+
+func (paths copyTestPaths) GetDroidConfigDir() string {
+	return filepath.Join(paths.root, "droid")
+}
+
+func useCopyTestPaths(t *testing.T) {
+	t.Helper()
+	oldPaths := platformPaths
+	platformPaths = copyTestPaths{root: t.TempDir()}
+	t.Cleanup(func() {
+		platformPaths = oldPaths
+	})
+}
 
 func TestHandleInputMapsClaudeFieldsToVisibleRows(t *testing.T) {
 	m := model{state: addClaudeCode}
@@ -101,5 +131,88 @@ func TestCodexArrowKeysUpdateSelectedChoiceField(t *testing.T) {
 	}
 	if got.formData.AuthMethod != "auth.json" {
 		t.Fatalf("AuthMethod changed while editing reasoning: got %q", got.formData.AuthMethod)
+	}
+}
+
+func TestNextCopyNameAvoidsExistingNames(t *testing.T) {
+	taken := map[string]bool{"prod (copy)": true, "prod (copy 2)": true}
+
+	got := nextCopyName("prod", func(name string) bool {
+		return taken[name]
+	})
+	if got != "prod (copy 3)" {
+		t.Fatalf("nextCopyName() = %q, want %q", got, "prod (copy 3)")
+	}
+}
+
+func TestCopyKeyDuplicatesSelectedClaudeConfig(t *testing.T) {
+	useCopyTestPaths(t)
+	config := &Config{
+		ClaudeCode: []ServiceConfig{{
+			Name:     "prod",
+			Provider: "switcher",
+			BaseURL:  "https://api.example.com",
+			APIKey:   "secret",
+			Model:    "model",
+		}},
+		Active: ActiveConfig{ClaudeCode: 0},
+	}
+	m := model{config: config, state: claudeCodeList}
+	m.sortClaudeCodeConfigs()
+
+	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("c")})
+	got := updated.(model)
+
+	if len(got.config.ClaudeCode) != 2 {
+		t.Fatalf("Claude config count after copy = %d, want 2", len(got.config.ClaudeCode))
+	}
+	copied := got.config.ClaudeCode[1]
+	if copied.Name != "prod (copy)" || copied.BaseURL != "https://api.example.com" || copied.APIKey != "secret" || copied.Model != "model" {
+		t.Fatalf("copied config = %+v", copied)
+	}
+	if got.config.Active.ClaudeCode != 0 {
+		t.Fatalf("active Claude index changed to %d, want 0", got.config.Active.ClaudeCode)
+	}
+	if len(got.sortedClaudeCode) != 2 {
+		t.Fatalf("sorted Claude config count = %d, want 2", len(got.sortedClaudeCode))
+	}
+	wantStatus := translations[currentLang]["success_copy"]
+	if got.error != wantStatus {
+		t.Fatalf("copy status = %q, want %q", got.error, wantStatus)
+	}
+}
+
+func TestCopyConfigMethodsDuplicateCodexAndDroid(t *testing.T) {
+	useCopyTestPaths(t)
+	config := &Config{
+		Codex: []ServiceConfig{{
+			Name:    "codex",
+			BaseURL: "https://codex.example.com",
+			APIKey:  "secret",
+		}},
+		Droid: []DroidConfig{{
+			ModelDisplayName: "droid",
+			Model:            "model",
+			BaseURL:          "https://droid.example.com",
+			APIKey:           "secret",
+		}},
+		Active: ActiveConfig{Codex: 0, Droid: 0},
+	}
+
+	if err := config.CopyCodexConfig(0); err != nil {
+		t.Fatalf("CopyCodexConfig() error = %v", err)
+	}
+	if err := config.CopyDroidConfig(0); err != nil {
+		t.Fatalf("CopyDroidConfig() error = %v", err)
+	}
+
+	if config.Codex[1].Name != "codex (copy)" || config.Codex[1].Provider != "switcher" {
+		t.Fatalf("copied Codex config = %+v", config.Codex[1])
+	}
+	if config.Droid[1].ModelDisplayName != "droid (copy)" || config.Droid[1].Model != "model" {
+		t.Fatalf("copied Droid config = %+v", config.Droid[1])
+	}
+	if config.Active.Codex != 0 || config.Active.Droid != 0 {
+		t.Fatalf("active indices changed: codex=%d droid=%d, want 0 and 0", config.Active.Codex, config.Active.Droid)
 	}
 }

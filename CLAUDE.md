@@ -83,7 +83,7 @@ CLI error codes: 2=config not found, 3=switch failed, 4=set active failed
 
 ## Key Features
 
-- **TUI Navigation**: Arrow keys, j/k vim-style navigation, Tab for field switching, Ctrl+S for save, V for view toggle, A for quick add
+- **TUI Navigation**: Arrow keys, j/k vim-style navigation, Tab for field switching, Ctrl+S for save, V for view toggle, A for quick add, C for copying a selected configuration
 - **Configuration Management**: Add, edit, delete, and switch between configurations for three services
 - **Security**: API keys are masked in display unless being edited
 - **Import**: Automatically imports existing configurations on first run

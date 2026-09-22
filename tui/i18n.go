@@ -20,7 +20,7 @@ var translations = map[string]map[string]string{
 		"nav_select":         "↑/↓ 选择",
 		"nav_confirm":        "Enter 确认",
 		"nav_back":           "Esc 返回",
-		"nav_edit":           "Tab 编辑 Del 删除",
+		"nav_edit":           "Tab 编辑 Del 删除 C 复制",
 		"nav_add":            "A 添加",
 		"nav_view":           "V 紧凑/展开",
 		"nav_switch_buttons": "←/→ 切换按钮",
@@ -56,9 +56,9 @@ var translations = map[string]map[string]string{
 		"field_opus_model":      "Opus 模型",
 		"field_sonnet_model":    "Sonnet 模型",
 		"field_autocompact_pct": "自动压缩阈值 (%)",
-		"field_http_proxy":     "HTTP 代理",
-		"field_https_proxy":    "HTTPS 代理",
-		"field_no_proxy":       "不代理地址",
+		"field_http_proxy":      "HTTP 代理",
+		"field_https_proxy":     "HTTPS 代理",
+		"field_no_proxy":        "不代理地址",
 
 		// Form hints
 		"hint_select":         "(←/→选择)",
@@ -103,6 +103,7 @@ var translations = map[string]map[string]string{
 		"success_delete_codex":  "✅ Codex 配置 '%s' 删除成功！",
 		"success_delete_droid":  "✅ Droid 配置 '%s' 删除成功！",
 		"success_lang_switch":   "✅ 语言已切换！",
+		"success_copy":          "✅ 配置复制成功！",
 
 		// Error messages
 		"error_fill_all":      "⚠️ 请填写所有字段",
@@ -150,7 +151,7 @@ var translations = map[string]map[string]string{
 		"nav_select":         "↑/↓ Select",
 		"nav_confirm":        "Enter Confirm",
 		"nav_back":           "Esc Back",
-		"nav_edit":           "Tab Edit Del Delete",
+		"nav_edit":           "Tab Edit Del Delete C Copy",
 		"nav_add":            "A Add",
 		"nav_view":           "V Compact/Expand",
 		"nav_switch_buttons": "←/→ Toggle Buttons",
@@ -186,9 +187,9 @@ var translations = map[string]map[string]string{
 		"field_opus_model":      "Opus Model",
 		"field_sonnet_model":    "Sonnet Model",
 		"field_autocompact_pct": "Autocompact Pct (%)",
-		"field_http_proxy":     "HTTP Proxy",
-		"field_https_proxy":    "HTTPS Proxy",
-		"field_no_proxy":       "No Proxy",
+		"field_http_proxy":      "HTTP Proxy",
+		"field_https_proxy":     "HTTPS Proxy",
+		"field_no_proxy":        "No Proxy",
 
 		// Form hints
 		"hint_select":         "(←/→ select)",
@@ -233,6 +234,7 @@ var translations = map[string]map[string]string{
 		"success_delete_codex":  "✅ Codex configuration '%s' deleted successfully!",
 		"success_delete_droid":  "✅ Droid configuration '%s' deleted successfully!",
 		"success_lang_switch":   "✅ Language switched!",
+		"success_copy":          "✅ Configuration copied successfully!",
 
 		// Error messages
 		"error_fill_all":      "⚠️ Please fill in all fields",

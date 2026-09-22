@@ -358,6 +358,48 @@ func (c *Config) AddCodexConfig(config ServiceConfig) error {
 	return c.Save()
 }
 
+func nextCopyName(base string, exists func(string) bool) string {
+	name := base + " (copy)"
+	for counter := 2; exists(name); counter++ {
+		name = fmt.Sprintf("%s (copy %d)", base, counter)
+	}
+	return name
+}
+
+func (c *Config) CopyClaudeCodeConfig(index int) error {
+	if index < 0 || index >= len(c.ClaudeCode) {
+		return fmt.Errorf("invalid Claude Code index")
+	}
+
+	config := c.ClaudeCode[index]
+	config.Name = nextCopyName(config.Name, func(name string) bool {
+		for _, existing := range c.ClaudeCode {
+			if existing.Name == name {
+				return true
+			}
+		}
+		return false
+	})
+	return c.AddClaudeCodeConfig(config)
+}
+
+func (c *Config) CopyCodexConfig(index int) error {
+	if index < 0 || index >= len(c.Codex) {
+		return fmt.Errorf("invalid Codex index")
+	}
+
+	config := c.Codex[index]
+	config.Name = nextCopyName(config.Name, func(name string) bool {
+		for _, existing := range c.Codex {
+			if existing.Name == name {
+				return true
+			}
+		}
+		return false
+	})
+	return c.AddCodexConfig(config)
+}
+
 func (c *Config) DeleteClaudeCodeConfig(index int) error {
 	if index < 0 || index >= len(c.ClaudeCode) {
 		return fmt.Errorf("invalid Claude Code index")
@@ -789,6 +831,23 @@ func (c *Config) AddDroidConfig(config DroidConfig) error {
 	config.Provider = "switcher"
 	c.Droid = append(c.Droid, config)
 	return c.Save()
+}
+
+func (c *Config) CopyDroidConfig(index int) error {
+	if index < 0 || index >= len(c.Droid) {
+		return fmt.Errorf("invalid Droid index")
+	}
+
+	config := c.Droid[index]
+	config.ModelDisplayName = nextCopyName(config.ModelDisplayName, func(name string) bool {
+		for _, existing := range c.Droid {
+			if existing.ModelDisplayName == name {
+				return true
+			}
+		}
+		return false
+	})
+	return c.AddDroidConfig(config)
 }
 
 func (c *Config) DeleteDroidConfig(index int) error {
