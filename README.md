@@ -212,7 +212,7 @@ switcher -switch-droid "Configuration Name"
 ```
 
 **Codex Authentication Methods:**
-- **`auth.json`** (default) - Uses `~/.codex/auth.json` file for authentication
+- **`auth.json`** (default) - Syncs `~/.codex/auth.json` and sets `experimental_bearer_token` in the provider section of `~/.codex/config.toml` so requests use the selected key
 - **`env`** - Uses environment variable `CODEX_KEY` (automatically set in shell config)
 
 ## 🎯 Supported Providers

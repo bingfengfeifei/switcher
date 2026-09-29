@@ -115,3 +115,13 @@ func writeFileWithPerms(path string, data []byte, perm os.FileMode) error {
 	}
 	return os.WriteFile(path, data, perm)
 }
+
+func writePrivateFile(path string, data []byte) error {
+	if err := writeFileWithPerms(path, data, 0600); err != nil {
+		return err
+	}
+	if runtime.GOOS != "windows" {
+		return os.Chmod(path, 0600)
+	}
+	return nil
+}

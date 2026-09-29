@@ -212,7 +212,7 @@ switcher -switch-droid "配置名称"
 ```
 
 **Codex 认证方式：**
-- **`auth.json`**（默认）- 使用 `~/.codex/auth.json` 文件进行身份验证
+- **`auth.json`**（默认）- 同步 `~/.codex/auth.json`，并在 `~/.codex/config.toml` 的 provider 中设置 `experimental_bearer_token`，使切换后的请求使用所选 key
 - **`env`** - 使用环境变量 `CODEX_KEY`（自动设置到 shell 配置文件中）
 
 ## 🎯 支持的提供商

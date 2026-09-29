@@ -117,6 +117,7 @@ type ClaudeSettings struct {
 }
 
 type CodexAuth struct {
+	AuthMode       string `json:"auth_mode,omitempty"`
 	OPENAI_API_KEY string `json:"OPENAI_API_KEY"`
 }
 
@@ -132,7 +133,7 @@ func (c *Config) Save() error {
 		return fmt.Errorf("failed to marshal config: %w", err)
 	}
 
-	return writeFileWithPerms(configPath, data, 0644)
+	return writePrivateFile(configPath, data)
 }
 
 func (c *Config) Load() error {
@@ -599,6 +600,7 @@ func (c *Config) SwitchCodex(config *ServiceConfig) error {
 
 	// Write auth.json
 	auth := CodexAuth{
+		AuthMode:       "apikey",
 		OPENAI_API_KEY: config.APIKey,
 	}
 	authData, err := json.Marshal(auth)
@@ -606,7 +608,7 @@ func (c *Config) SwitchCodex(config *ServiceConfig) error {
 		return fmt.Errorf("failed to marshal Codex auth: %w", err)
 	}
 	authPath := filepath.Join(codexDir, "auth.json")
-	if err := writeFileWithPerms(authPath, authData, 0644); err != nil {
+	if err := writePrivateFile(authPath, authData); err != nil {
 		return fmt.Errorf("failed to write auth.json: %w", err)
 	}
 
@@ -647,8 +649,12 @@ func (c *Config) SwitchCodex(config *ServiceConfig) error {
 		wireAPI = DefaultWireAPI
 	}
 
+	authMethod := config.AuthMethod
+	if authMethod == "" {
+		authMethod = "auth.json"
+	}
 	envKey := ""
-	if config.AuthMethod == "env" {
+	if authMethod == "env" {
 		envKey = config.EnvKey
 		if envKey == "" {
 			envKey = DefaultEnvKey
@@ -666,20 +672,18 @@ base_url = "%s"
 wire_api = "%s"`, escapeTomlString(providerName), escapeTomlString(config.BaseURL), escapeTomlString(wireAPI))
 	if envKey != "" {
 		sectionBody += fmt.Sprintf("\nenv_key = \"%s\"", escapeTomlString(envKey))
+	} else {
+		sectionBody += fmt.Sprintf("\nexperimental_bearer_token = \"%s\"", escapeTomlString(config.APIKey))
 	}
-	sectionBody += fmt.Sprintf("\nrequires_openai_auth = %t", true)
+	sectionBody += "\nrequires_openai_auth = false"
 	content = updateOrAddTomlSection(content, fmt.Sprintf("model_providers.%s", providerName), sectionBody)
 
 	// Write back
-	if err := writeFileWithPerms(configPath, []byte(content), 0644); err != nil {
+	if err := writePrivateFile(configPath, []byte(content)); err != nil {
 		return fmt.Errorf("failed to write config.toml: %w", err)
 	}
 
 	// Set environment variable for env auth method
-	authMethod := config.AuthMethod
-	if authMethod == "" {
-		authMethod = "auth.json"
-	}
 	if authMethod == "env" {
 		return shellManager.SetEnvVar(envKey, config.APIKey)
 	}
@@ -822,7 +826,6 @@ func defaultCodexConfigTOML() string {
 	return fmt.Sprintf(`model_provider = "openai"
 model = "%s"
 model_reasoning_effort = "%s"
-disable_response_storage = false
 `, DefaultCodexModel, DefaultModelReasoningEffort)
 }
 
