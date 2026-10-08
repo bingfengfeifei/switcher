@@ -97,11 +97,15 @@ func (m model) addDroidConfigView() string {
 
 		// 对于API密钥字段，如果正在编辑，显示完整内容，否则显示遮蔽内容
 		displayValue := field.value
+		if m.formField == i {
+			// 文本字段：在光标位置渲染输入光标
+			displayValue = renderInputCursor(displayValue, m.formCursor, m.cursorVisible)
+		}
 		if i == FieldAPIKey && m.formField != FieldAPIKey { // API密钥字段且不在编辑状态
 			displayValue = maskAPIKey(field.value)
 		} else if i == FieldAPIKey && m.formField == FieldAPIKey {
 			// 如果正在编辑API密钥字段，显示完整内容但添加提示
-			displayValue = field.value + " " + t("hint_editing")
+			displayValue = displayValue + " " + t("hint_editing")
 		}
 
 		highlight := ""
@@ -153,11 +157,15 @@ func (m model) editDroidConfigView() string {
 
 		// 对于API密钥字段，如果正在编辑，显示完整内容，否则显示遮蔽内容
 		displayValue := field.value
+		if m.formField == i {
+			// 文本字段：在光标位置渲染输入光标
+			displayValue = renderInputCursor(displayValue, m.formCursor, m.cursorVisible)
+		}
 		if i == FieldAPIKey && m.formField != FieldAPIKey { // API密钥字段且不在编辑状态
 			displayValue = maskAPIKey(field.value)
 		} else if i == FieldAPIKey && m.formField == FieldAPIKey {
 			// 如果正在编辑API密钥字段，显示完整内容但添加提示
-			displayValue = field.value + " " + t("hint_editing")
+			displayValue = displayValue + " " + t("hint_editing")
 		}
 
 		highlight := ""

@@ -27,6 +27,14 @@ const (
 	DroidFieldCount      = 4
 )
 
+// isSelectField 判断字段是否为选择型（左右键切换，非文本输入，不显示输入光标）
+func isSelectField(serviceType string, i int) bool {
+	if serviceType == "Codex" {
+		return i == FieldWireAPI || i == FieldAuthMethod || i == FieldModelReasoningEffort
+	}
+	return i == 3 // Claude Code 推理强度字段
+}
+
 type state int
 
 const (
@@ -58,6 +66,8 @@ type model struct {
 	formData         ServiceConfig
 	droidFormData    DroidConfig
 	formField        int
+	formCursor       int  // 表单文本字段内的输入光标位置（rune 下标）
+	cursorVisible    bool // 输入光标闪烁可见性
 	error            string
 	editIndex        int
 	actionType       string          // 新增：操作类型 ("switch" 或 "edit")
@@ -250,6 +260,10 @@ func (m model) addConfigView(serviceType string) string {
 
 		// 对于Wire API字段，显示选择选项
 		displayValue := field.value
+		if m.formField == i && !isSelectField(serviceType, i) {
+			// 文本字段：在光标位置渲染输入光标
+			displayValue = renderInputCursor(displayValue, m.formCursor, m.cursorVisible)
+		}
 		if serviceType == "Codex" && i == FieldWireAPI { // Wire API字段
 			if m.formField == i {
 				displayValue = field.value + " " + t("hint_select")
@@ -353,11 +367,15 @@ func (m model) editConfigView(serviceType string) string {
 
 		// 对于API密钥字段，如果正在编辑，显示完整内容，否则显示遮蔽内容
 		displayValue := field.value
+		if m.formField == i && !isSelectField(serviceType, i) {
+			// 文本字段：在光标位置渲染输入光标
+			displayValue = renderInputCursor(displayValue, m.formCursor, m.cursorVisible)
+		}
 		if i == FieldAPIKey && m.formField != FieldAPIKey { // API密钥字段且不在编辑状态
 			displayValue = maskAPIKey(field.value)
 		} else if i == FieldAPIKey && m.formField == FieldAPIKey {
 			// 如果正在编辑API密钥字段，显示完整内容但添加提示
-			displayValue = field.value + " " + t("hint_editing")
+			displayValue = displayValue + " " + t("hint_editing")
 		}
 
 		// 对于Wire API字段，显示选择选项

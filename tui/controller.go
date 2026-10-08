@@ -12,6 +12,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// 更新窗口高度
 		m.windowHeight = msg.Height
 		return m, nil
+	case blinkMsg:
+		// 输入光标闪烁（仅在表单中有视觉效果）
+		m.cursorVisible = !m.cursorVisible
+		return m, blinkCursor()
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyCtrlC:
@@ -274,6 +278,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				} else {
 					m.formData.EffortLevel = ModelReasoningEffortAuto
 				}
+			} else if m.isFormState() {
+				// 文本字段：左移输入光标
+				if f := m.activeTextField(); f != nil {
+					if m.formCursor > 0 {
+						m.formCursor--
+					}
+					m.cursorVisible = true
+					return m, nil
+				}
 			}
 
 		case tea.KeyRight:
@@ -328,6 +341,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.formData.EffortLevel = ModelReasoningEffortMax
 				} else {
 					m.formData.EffortLevel = ModelReasoningEffortAuto
+				}
+			} else if m.isFormState() {
+				// 文本字段：右移输入光标
+				if f := m.activeTextField(); f != nil {
+					if m.formCursor < len([]rune(*f)) {
+						m.formCursor++
+					}
+					m.cursorVisible = true
+					return m, nil
 				}
 			}
 
@@ -637,7 +659,36 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.error = t("error_fill_all")
 				}
 			}
+		case tea.KeyHome:
+			if m.isFormState() {
+				// 文本字段：光标移到开头
+				if f := m.activeTextField(); f != nil {
+					m.formCursor = 0
+					m.cursorVisible = true
+					return m, nil
+				}
+			}
+		case tea.KeyEnd:
+			if m.isFormState() {
+				// 文本字段：光标移到末尾
+				if f := m.activeTextField(); f != nil {
+					m.formCursor = len([]rune(*f))
+					m.cursorVisible = true
+					return m, nil
+				}
+			}
 		case tea.KeyDelete:
+			if m.isFormState() {
+				// 文本字段：删除光标后的字符
+				if f := m.activeTextField(); f != nil {
+					r := []rune(*f)
+					if m.formCursor < len(r) {
+						*f = string(r[:m.formCursor]) + string(r[m.formCursor+1:])
+					}
+					m.cursorVisible = true
+					return m, nil
+				}
+			}
 			// 在配置列表中，Delete键删除选中的配置
 			if m.state == claudeCodeList {
 				if m.cursor < len(m.sortedClaudeCode) {
@@ -680,6 +731,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		default:
 			// 兜底：非 KeyRunes 情况下一般不接收字符输入。
 		}
+	}
+	// 表单内经过字段导航（Tab/↑↓/进入表单等）后，将输入光标重置到当前字段值末尾；
+	// 输入、退格、光标移动等按键均已提前 return，不会经过此处
+	if m.isFormState() {
+		m.resetFormCursor()
 	}
 	// 列表状态时刷新排序列表，确保添加/编辑/删除后立即更新
 	switch m.state {
@@ -1136,196 +1192,129 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// isFormState 判断当前是否处于表单（新增/编辑）状态
+func (m model) isFormState() bool {
+	switch m.state {
+	case addClaudeCode, addCodex, addDroid, editClaudeCode, editCodex, editDroid:
+		return true
+	}
+	return false
+}
+
+// activeTextField 返回当前表单激活文本字段的字符串指针；选择型字段返回 nil
+func (m *model) activeTextField() *string {
+	switch m.state {
+	case addDroid, editDroid:
+		switch m.formField {
+		case 0:
+			return &m.droidFormData.ModelDisplayName
+		case 1:
+			return &m.droidFormData.Model
+		case 2:
+			return &m.droidFormData.BaseURL
+		case 3:
+			return &m.droidFormData.APIKey
+		}
+	case addClaudeCode, editClaudeCode:
+		switch m.formField {
+		case 0:
+			return &m.formData.Name
+		case 1:
+			return &m.formData.BaseURL
+		case 2:
+			return &m.formData.APIKey
+		case 3:
+			return nil // 推理强度：选择字段
+		case 4:
+			return &m.formData.ClaudeDefaultHaikuModel
+		case 5:
+			return &m.formData.ClaudeDefaultOpusModel
+		case 6:
+			return &m.formData.ClaudeDefaultSonnetModel
+		case 7:
+			return &m.formData.AutocompactPctOverride
+		case 8:
+			return &m.formData.HTTPProxy
+		case 9:
+			return &m.formData.HTTPSProxy
+		case 10:
+			return &m.formData.NOProxy
+		}
+	case addCodex, editCodex:
+		switch m.formField {
+		case 0:
+			return &m.formData.Name
+		case 1:
+			return &m.formData.BaseURL
+		case 2:
+			return &m.formData.APIKey
+		case 3:
+			return &m.formData.Model
+		default:
+			return nil // Wire API/认证方式/推理强度：选择字段
+		}
+	}
+	return nil
+}
+
+// resetFormCursor 将输入光标重置到当前字段值末尾（进入表单或切换字段后调用）
+func (m *model) resetFormCursor() {
+	if !m.isFormState() {
+		return
+	}
+	m.cursorVisible = true
+	if f := m.activeTextField(); f != nil {
+		m.formCursor = len([]rune(*f))
+	} else {
+		m.formCursor = 0
+	}
+}
+
 func (m model) handleInput(char string) (tea.Model, tea.Cmd) {
+	f := m.activeTextField()
+	if f == nil {
+		return m, nil // 选择型字段不接收文本输入
+	}
 	s := sanitizeInput(char)
 	if s == "" {
 		return m, nil
 	}
-
-	// Handle Droid form inputs
-	if m.state == addDroid || m.state == editDroid {
-		switch m.formField {
-		case 0:
-			m.droidFormData.ModelDisplayName += s
-		case 1:
-			m.droidFormData.Model += s
-		case 2:
-			m.droidFormData.BaseURL += s
-		case 3:
-			m.droidFormData.APIKey += s
-		}
-		return m, nil
-	}
-
-	// Handle Claude Code form inputs
-	if m.state == addClaudeCode || m.state == editClaudeCode {
-		switch m.formField {
-		case 0:
-			m.formData.Name += s
-		case 1:
-			m.formData.BaseURL += s
-		case 2:
-			m.formData.APIKey += s
-		case 3:
-			// EffortLevel: 选择字段，不处理文本输入
-		case 4:
-			m.formData.ClaudeDefaultHaikuModel += s
-		case 5:
-			m.formData.ClaudeDefaultOpusModel += s
-		case 6:
-			m.formData.ClaudeDefaultSonnetModel += s
-		case 7:
-			// 自动压缩阈值：仅接受数字字符，1-100 的范围在写入 settings.json 时校验
-			for _, r := range s {
-				if r >= '0' && r <= '9' {
-					m.formData.AutocompactPctOverride += string(r)
-				}
+	// 自动压缩阈值字段：仅接受数字字符，1-100 的范围在写入 settings.json 时校验
+	if (m.state == addClaudeCode || m.state == editClaudeCode) && m.formField == 7 {
+		var digits []rune
+		for _, r := range s {
+			if r >= '0' && r <= '9' {
+				digits = append(digits, r)
 			}
-		case 8:
-			m.formData.HTTPProxy += s
-		case 9:
-			m.formData.HTTPSProxy += s
-		case 10:
-			m.formData.NOProxy += s
 		}
-		return m, nil
+		s = string(digits)
+		if s == "" {
+			return m, nil
+		}
 	}
-
-	// Handle Codex form inputs
-	switch m.formField {
-	case 0:
-		m.formData.Name += s
-	case 1:
-		m.formData.BaseURL += s
-	case 2:
-		m.formData.APIKey += s
-	case 3:
-		m.formData.Model += s
-	case 4:
-		// Wire API字段：不处理输入，使用左右键选择
-	case 5:
-		// AuthMethod字段：不处理输入，使用左右键选择
-	case 6:
-		// 推理强度字段：不处理输入，使用左右键选择
+	r := []rune(*f)
+	if m.formCursor < 0 || m.formCursor > len(r) {
+		m.formCursor = len(r)
 	}
+	*f = string(r[:m.formCursor]) + s + string(r[m.formCursor:])
+	m.formCursor += len([]rune(s))
+	m.cursorVisible = true
 	return m, nil
 }
 
 func (m model) handleBackspace() (tea.Model, tea.Cmd) {
-	// Handle Droid form backspace
-	if m.state == addDroid || m.state == editDroid {
-		switch m.formField {
-		case 0:
-			if len(m.droidFormData.ModelDisplayName) > 0 {
-				r := []rune(m.droidFormData.ModelDisplayName)
-				m.droidFormData.ModelDisplayName = string(r[:len(r)-1])
-			}
-		case 1:
-			if len(m.droidFormData.Model) > 0 {
-				r := []rune(m.droidFormData.Model)
-				m.droidFormData.Model = string(r[:len(r)-1])
-			}
-		case 2:
-			if len(m.droidFormData.BaseURL) > 0 {
-				r := []rune(m.droidFormData.BaseURL)
-				m.droidFormData.BaseURL = string(r[:len(r)-1])
-			}
-		case 3:
-			if len(m.droidFormData.APIKey) > 0 {
-				r := []rune(m.droidFormData.APIKey)
-				m.droidFormData.APIKey = string(r[:len(r)-1])
-			}
-		}
-		return m, nil
+	f := m.activeTextField()
+	if f == nil {
+		return m, nil // 选择型字段不处理退格，使用左右键选择
 	}
-
-	// Handle Claude Code form backspace
-	if m.state == addClaudeCode || m.state == editClaudeCode {
-		switch m.formField {
-		case 0:
-			if len(m.formData.Name) > 0 {
-				r := []rune(m.formData.Name)
-				m.formData.Name = string(r[:len(r)-1])
-			}
-		case 1:
-			if len(m.formData.BaseURL) > 0 {
-				r := []rune(m.formData.BaseURL)
-				m.formData.BaseURL = string(r[:len(r)-1])
-			}
-		case 2:
-			if len(m.formData.APIKey) > 0 {
-				r := []rune(m.formData.APIKey)
-				m.formData.APIKey = string(r[:len(r)-1])
-			}
-		case 3:
-			// EffortLevel: 选择字段，不处理退格
-		case 4:
-			if len(m.formData.ClaudeDefaultHaikuModel) > 0 {
-				r := []rune(m.formData.ClaudeDefaultHaikuModel)
-				m.formData.ClaudeDefaultHaikuModel = string(r[:len(r)-1])
-			}
-		case 5:
-			if len(m.formData.ClaudeDefaultOpusModel) > 0 {
-				r := []rune(m.formData.ClaudeDefaultOpusModel)
-				m.formData.ClaudeDefaultOpusModel = string(r[:len(r)-1])
-			}
-		case 6:
-			if len(m.formData.ClaudeDefaultSonnetModel) > 0 {
-				r := []rune(m.formData.ClaudeDefaultSonnetModel)
-				m.formData.ClaudeDefaultSonnetModel = string(r[:len(r)-1])
-			}
-		case 7:
-			if len(m.formData.AutocompactPctOverride) > 0 {
-				r := []rune(m.formData.AutocompactPctOverride)
-				m.formData.AutocompactPctOverride = string(r[:len(r)-1])
-			}
-		case 8:
-			if len(m.formData.HTTPProxy) > 0 {
-				r := []rune(m.formData.HTTPProxy)
-				m.formData.HTTPProxy = string(r[:len(r)-1])
-			}
-		case 9:
-			if len(m.formData.HTTPSProxy) > 0 {
-				r := []rune(m.formData.HTTPSProxy)
-				m.formData.HTTPSProxy = string(r[:len(r)-1])
-			}
-		case 10:
-			if len(m.formData.NOProxy) > 0 {
-				r := []rune(m.formData.NOProxy)
-				m.formData.NOProxy = string(r[:len(r)-1])
-			}
-		}
-		return m, nil
+	r := []rune(*f)
+	if m.formCursor > len(r) {
+		m.formCursor = len(r)
 	}
-
-	// Handle Codex form backspace
-	switch m.formField {
-	case 0:
-		if len(m.formData.Name) > 0 {
-			r := []rune(m.formData.Name)
-			m.formData.Name = string(r[:len(r)-1])
-		}
-	case 1:
-		if len(m.formData.BaseURL) > 0 {
-			r := []rune(m.formData.BaseURL)
-			m.formData.BaseURL = string(r[:len(r)-1])
-		}
-	case 2:
-		if len(m.formData.APIKey) > 0 {
-			r := []rune(m.formData.APIKey)
-			m.formData.APIKey = string(r[:len(r)-1])
-		}
-	case 3:
-		if len(m.formData.Model) > 0 {
-			r := []rune(m.formData.Model)
-			m.formData.Model = string(r[:len(r)-1])
-		}
-	case 4:
-		// Wire API字段：不处理退格，使用左右键选择
-	case 5:
-		// AuthMethod字段：不处理退格，使用左右键选择
-	case 6:
-		// 推理强度字段：不处理退格，使用左右键选择
+	if m.formCursor > 0 {
+		*f = string(r[:m.formCursor-1]) + string(r[m.formCursor:])
+		m.formCursor--
 	}
+	m.cursorVisible = true
 	return m, nil
 }

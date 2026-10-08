@@ -58,7 +58,7 @@ func TestHandleInputMapsClaudeFieldsToVisibleRows(t *testing.T) {
 	}
 
 	m = model{state: addClaudeCode}
-	m.formField = 5
+	m.formField = 6
 	updated, _ = m.handleInput("s")
 	got = updated.(model)
 	if got.formData.ClaudeDefaultSonnetModel != "s" {

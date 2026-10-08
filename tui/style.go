@@ -30,6 +30,31 @@ var (
 	headerVersion       = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("8")).Padding(0, 1)
 )
 
+// 文本输入光标样式
+var (
+	inputCursorStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("15"))
+	cursorCharStyle  = lipgloss.NewStyle().Reverse(true).Bold(true)
+)
+
+// renderInputCursor 在文本字段值上渲染输入光标：pos 为光标的 rune 位置，
+// 闪烁隐藏时原样返回；显示时反显光标处字符，位于末尾则渲染块光标
+func renderInputCursor(value string, pos int, visible bool) string {
+	if !visible {
+		return value
+	}
+	r := []rune(value)
+	if pos < 0 {
+		pos = 0
+	}
+	if pos > len(r) {
+		pos = len(r)
+	}
+	if pos == len(r) {
+		return string(r[:pos]) + inputCursorStyle.Render("▌")
+	}
+	return string(r[:pos]) + cursorCharStyle.Render(string(r[pos])) + string(r[pos+1:])
+}
+
 // Header and UI helpers
 func headerView(title string) string {
 	line := strings.Repeat("─", max(8, len(title)+6))
