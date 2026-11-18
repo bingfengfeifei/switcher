@@ -252,6 +252,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				} else {
 					m.formData.AuthMethod = "auth.json"
 				}
+			} else if (m.state == addCodex || m.state == editCodex) && m.formField == FieldServiceTier {
+				m.formData.ServiceTier = cycleCodexSpeed(m.formData.ServiceTier, -1)
 			} else if (m.state == addCodex || m.state == editCodex) && m.formField == FieldModelReasoningEffort {
 				// 推理强度字段：在low、medium、high、xhigh之间切换
 				if m.formData.ModelReasoningEffort == ModelReasoningEffortLow {
@@ -316,6 +318,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				} else {
 					m.formData.AuthMethod = "auth.json"
 				}
+			} else if (m.state == addCodex || m.state == editCodex) && m.formField == FieldServiceTier {
+				m.formData.ServiceTier = cycleCodexSpeed(m.formData.ServiceTier, 1)
 			} else if (m.state == addCodex || m.state == editCodex) && m.formField == FieldModelReasoningEffort {
 				// 推理强度字段：在low、medium、high、xhigh之间切换
 				if m.formData.ModelReasoningEffort == ModelReasoningEffortLow {
@@ -516,7 +520,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.editIndex = originalIndex
 					m.formData = m.config.Codex[m.editIndex]
 					m.state = editCodex
-					m.cursor = 0 // Codex有7个字段，从第一个字段开始
+					m.cursor = 0
 					m.formField = 0
 					m.error = ""
 				}
@@ -538,7 +542,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				// Claude Code有7个字段
 				m.formField = (m.formField + 1) % ClaudeCodeFieldCount
 			} else if m.state == addCodex || m.state == editCodex {
-				// Codex有7个字段
 				m.formField = (m.formField + 1) % CodexFieldCount
 			} else if m.state == addDroid || m.state == editDroid {
 				// Droid有4个字段
@@ -765,7 +768,7 @@ func (m model) getMaxCursor() int {
 	case addDroid, editDroid:
 		return DroidFieldCount - 1 // 字段 0..3
 	case addCodex, editCodex:
-		return CodexFieldCount - 1 // 字段 0..5
+		return CodexFieldCount - 1
 	case confirmDeleteClaudeCode, confirmDeleteCodex, confirmDeleteDroid, confirmExitAddClaudeCode, confirmExitAddCodex, confirmExitAddDroid:
 		return 1 // 0=确认操作，1=取消
 	default:
@@ -965,7 +968,7 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 			m.cursor = 0
 		}
 	case addCodex:
-		if m.cursor == 6 {
+		if m.cursor == CodexFieldCount-1 {
 			if m.hasRequiredServiceFields() {
 				// Set default values for Codex config
 				if m.formData.Model == "" {
@@ -990,7 +993,7 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 			} else {
 				m.error = "⚠️ 请填写所有字段"
 			}
-		} else if m.cursor == 7 {
+		} else if m.cursor == CodexFieldCount {
 			m.state = mainMenu
 			m.cursor = 0
 		}
@@ -1033,7 +1036,7 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 			m.cursor = 0
 		}
 	case editCodex:
-		if m.cursor == 6 {
+		if m.cursor == CodexFieldCount-1 {
 			if m.hasRequiredServiceFields() {
 				// Set default values for Codex config
 				if m.formData.Model == "" {
@@ -1065,7 +1068,7 @@ func (m model) handleSelect() (tea.Model, tea.Cmd) {
 			} else {
 				m.error = "⚠️ 请填写所有字段"
 			}
-		} else if m.cursor == 7 {
+		} else if m.cursor == CodexFieldCount {
 			m.state = codexList
 			m.cursor = 0
 		}
@@ -1251,7 +1254,7 @@ func (m *model) activeTextField() *string {
 		case 3:
 			return &m.formData.Model
 		default:
-			return nil // Wire API/认证方式/推理强度：选择字段
+			return nil
 		}
 	}
 	return nil

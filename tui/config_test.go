@@ -20,6 +20,83 @@ func (m *recordingShellManager) SetEnvVar(key, value string) error {
 	return nil
 }
 
+func TestSwitchCodexServiceTier(t *testing.T) {
+	const existingTier = `"service_tier" = 'fast'# existing choice` + "\n"
+	const nested = "[profiles.custom]\nservice_tier = \"flex\"\n"
+	testCases := []struct {
+		name     string
+		initial  string
+		selected string
+		want     string
+	}{
+		{name: "keep existing", initial: existingTier, want: "fast"},
+		{name: "keep absent"},
+		{name: "standard replaces fast", initial: existingTier, selected: "default", want: "default"},
+		{name: "fast inserts top-level key", selected: "priority", want: "priority"},
+		{name: "ultrafast replaces fast", initial: existingTier, selected: "ultrafast", want: "ultrafast"},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			useCopyTestPaths(t)
+			codexDir := platformPaths.GetCodexConfigDir()
+			if err := os.MkdirAll(codexDir, 0755); err != nil {
+				t.Fatal(err)
+			}
+			configPath := filepath.Join(codexDir, "config.toml")
+			if err := os.WriteFile(configPath, []byte("model = \"old-model\"\n"+testCase.initial+nested), 0600); err != nil {
+				t.Fatal(err)
+			}
+			config := Config{}
+			if err := config.SwitchCodex(&ServiceConfig{Provider: "switcher", ServiceTier: testCase.selected}); err != nil {
+				t.Fatal(err)
+			}
+			data, err := os.ReadFile(configPath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			content := string(data)
+			if tier, found := readTomlKey(content, "service_tier"); tier != testCase.want || found != (testCase.want != "") {
+				t.Fatalf("service_tier = %q (present = %t), want %q", tier, found, testCase.want)
+			}
+			if !strings.Contains(content, nested) || strings.Contains(content, existingTier) != (testCase.want == "fast") {
+				t.Fatalf("unexpected service_tier edits in:\n%s", content)
+			}
+			if model, _ := readTomlKey(content, "model"); model != "gpt-6.2-sol" {
+				t.Fatalf("model = %q, want gpt-6.2-sol", model)
+			}
+		})
+	}
+}
+
+func TestLoadImportsCodexModelAndSpeed(t *testing.T) {
+	useCopyTestPaths(t)
+	codexDir := platformPaths.GetCodexConfigDir()
+	if err := os.MkdirAll(codexDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(codexDir, "auth.json"), []byte(`{"OPENAI_API_KEY":"test-key"}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	configPath := filepath.Join(codexDir, "config.toml")
+	if err := os.WriteFile(configPath, []byte("model = 'custom-model'\nservice_tier = \"fast\"\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	var config Config
+	if err := config.Load(); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(configPath); err != nil {
+		t.Fatal(err)
+	}
+	var reloaded Config
+	if err := reloaded.Load(); err != nil {
+		t.Fatal(err)
+	}
+	if active := reloaded.GetActiveCodex(); active == nil || active.Model != "custom-model" || active.ServiceTier != "fast" {
+		t.Fatal("reloaded config did not retain the imported model and speed")
+	}
+}
+
 func TestSwitchCodexKeepsEndpointAndKeyTogether(t *testing.T) {
 	useCopyTestPaths(t)
 	codexDir := platformPaths.GetCodexConfigDir()

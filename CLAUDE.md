@@ -79,6 +79,7 @@ CLI error codes: 2=config not found, 3=switch failed, 4=set active failed
 - **Claude Code settings**: `~/.claude/settings.json`
 - **Codex auth**: `~/.codex/auth.json`
 - **Codex config**: `~/.codex/config.toml`
+- **Codex response speed**: Optional per Switcher configuration; written to the top-level `service_tier` in `config.toml` on activation. An unset value leaves the current Codex setting unchanged.
 - **Droid config**: `~/.factory/config.json`
 
 ## Key Features

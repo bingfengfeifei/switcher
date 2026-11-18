@@ -134,6 +134,39 @@ func TestCodexArrowKeysUpdateSelectedChoiceField(t *testing.T) {
 	}
 }
 
+func TestCodexSpeedChoicePersistsOnSave(t *testing.T) {
+	useCopyTestPaths(t)
+	m := model{
+		state:     addCodex,
+		config:    &Config{Active: ActiveConfig{Codex: -1}},
+		formField: FieldModelReasoningEffort,
+		formData:  ServiceConfig{Name: "Test", BaseURL: "https://example.com/v1", APIKey: "test-key"},
+	}
+	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyTab})
+	m = updated.(model)
+	if m.formField != FieldServiceTier || m.activeTextField() != nil {
+		t.Fatal("speed field is not reachable as a choice field")
+	}
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	m = updated.(model)
+	if m.formData.ServiceTier != "ultrafast" {
+		t.Fatalf("left arrow from unset = %q, want ultrafast", m.formData.ServiceTier)
+	}
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	updated, _ = updated.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m = updated.(model)
+	if m.state != codexList {
+		t.Fatalf("saving Codex config failed: %s", m.error)
+	}
+	var reloaded Config
+	if err := reloaded.Load(); err != nil {
+		t.Fatal(err)
+	}
+	if len(reloaded.Codex) != 1 || reloaded.Codex[0].ServiceTier != "priority" || reloaded.Codex[0].Model != "gpt-6.2-sol" {
+		t.Fatal("reloaded config did not retain the selected Fast tier and default model")
+	}
+}
+
 func TestNextCopyNameAvoidsExistingNames(t *testing.T) {
 	taken := map[string]bool{"prod (copy)": true, "prod (copy 2)": true}
 

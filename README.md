@@ -206,12 +206,15 @@ switcher -switch-droid "Configuration Name"
   "provider": "openai",
   "base_url": "https://api.openai.com/v1",
   "api_key": "sk-...",
-  "model": "gpt-5.1-codex",
+  "model": "gpt-6.2-sol",
   "wire_api": "responses",
   "auth_method": "auth.json",
-  "model_reasoning_effort": "medium"
+  "model_reasoning_effort": "medium",
+  "service_tier": "priority"
 }
 ```
+
+**Codex response speed:** Use the left/right arrow keys in the **Response Speed** field. Switcher saves the choice per configuration and writes it as a top-level `service_tier` in `~/.codex/config.toml` when you activate the configuration. The choices are **Keep current Codex setting** (default; leaves the existing value untouched), **Standard** (`default`), **Fast** (`priority`), and **Ultrafast** (`ultrafast`). Faster tiers depend on model and provider support. New configurations default to `gpt-6.2-sol`; explicitly saved models are unchanged.
 
 **Codex Authentication Methods:**
 - **`auth.json`** (default) - Syncs `~/.codex/auth.json` and sets `experimental_bearer_token` in the provider section of `~/.codex/config.toml` so requests use the selected key

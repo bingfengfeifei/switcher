@@ -204,12 +204,15 @@ switcher -switch-droid "配置名称"
   "provider": "openai",
   "base_url": "https://api.openai.com/v1",
   "api_key": "sk-...",
-  "model": "gpt-5.1-codex",
+  "model": "gpt-6.2-sol",
   "wire_api": "responses",
   "auth_method": "auth.json",
-  "model_reasoning_effort": "medium"
+  "model_reasoning_effort": "medium",
+  "service_tier": "priority"
 }
 ```
+
+**Codex 响应速度：** 在「响应速度」字段用左右键选择。Switcher 按配置项保存速度，启用该配置时才写入 `~/.codex/config.toml` 的顶层 `service_tier`。可选「保留 Codex 当前设置」（默认，不改写原值）、Standard（`default`）、Fast（`priority`）和 Ultrafast（`ultrafast`）。加速档位需模型和供应商支持。新配置默认使用 `gpt-6.2-sol`，不会替换已明确保存的模型。
 
 **Codex 认证方式：**
 - **`auth.json`**（默认）- 同步 `~/.codex/auth.json`，并在 `~/.codex/config.toml` 的 provider 中设置 `experimental_bearer_token`，使切换后的请求使用所选 key

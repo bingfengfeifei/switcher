@@ -14,6 +14,7 @@ const (
 	FieldWireAPI
 	FieldAuthMethod
 	FieldModelReasoningEffort
+	FieldServiceTier
 	FieldClaudeEffortLevel
 	FieldClaudeDefaultHaikuModel
 	FieldClaudeDefaultOpusModel
@@ -23,14 +24,14 @@ const (
 // 配置类型字段数量
 const (
 	ClaudeCodeFieldCount = 11 // Name, BaseURL, APIKey, EffortLevel, HaikuModel, OpusModel, SonnetModel, AutocompactPct, HTTPProxy, HTTPSProxy, NOProxy
-	CodexFieldCount      = 7 // Name, BaseURL, APIKey, Model, WireAPI, AuthMethod, Reasoning
+	CodexFieldCount      = FieldServiceTier + 1
 	DroidFieldCount      = 4
 )
 
 // isSelectField 判断字段是否为选择型（左右键切换，非文本输入，不显示输入光标）
 func isSelectField(serviceType string, i int) bool {
 	if serviceType == "Codex" {
-		return i == FieldWireAPI || i == FieldAuthMethod || i == FieldModelReasoningEffort
+		return i == FieldWireAPI || i == FieldAuthMethod || i == FieldModelReasoningEffort || i == FieldServiceTier
 	}
 	return i == 3 // Claude Code 推理强度字段
 }
@@ -214,6 +215,7 @@ func (m model) addConfigView(serviceType string) string {
 			{t("field_wire_api"), m.formData.WireAPI},
 			{t("field_auth_method"), m.formData.AuthMethod},
 			{t("field_reasoning"), m.formData.ModelReasoningEffort},
+			{t("field_speed"), codexSpeedLabel(m.formData.ServiceTier)},
 		}
 	} else {
 		// 设置默认值
@@ -258,41 +260,12 @@ func (m model) addConfigView(serviceType string) string {
 			highlight = fieldHighlightStyle.Render(" ◀")
 		}
 
-		// 对于Wire API字段，显示选择选项
 		displayValue := field.value
-		if m.formField == i && !isSelectField(serviceType, i) {
-			// 文本字段：在光标位置渲染输入光标
-			displayValue = renderInputCursor(displayValue, m.formCursor, m.cursorVisible)
-		}
-		if serviceType == "Codex" && i == FieldWireAPI { // Wire API字段
-			if m.formField == i {
-				displayValue = field.value + " " + t("hint_select")
+		if m.formField == i {
+			if isSelectField(serviceType, i) {
+				displayValue += " " + t("hint_select")
 			} else {
-				displayValue = field.value
-			}
-		}
-		// 对于认证方式字段，显示选择选项
-		if serviceType == "Codex" && i == FieldAuthMethod {
-			if m.formField == i {
-				displayValue = field.value + " " + t("hint_select")
-			} else {
-				displayValue = field.value
-			}
-		}
-		// 对于推理强度字段，显示选择选项
-		if serviceType == "Codex" && i == FieldModelReasoningEffort { // 推理强度字段
-			if m.formField == i {
-				displayValue = field.value + " " + t("hint_select")
-			} else {
-				displayValue = field.value
-			}
-		}
-		// 对于Claude推理强度字段，显示选择选项
-		if serviceType != "Codex" && i == 3 {
-			if m.formField == i {
-				displayValue = field.value + " " + t("hint_select")
-			} else {
-				displayValue = field.value
+				displayValue = renderInputCursor(displayValue, m.formCursor, m.cursorVisible)
 			}
 		}
 
@@ -330,6 +303,7 @@ func (m model) editConfigView(serviceType string) string {
 			{t("field_wire_api"), m.formData.WireAPI},
 			{t("field_auth_method"), m.formData.AuthMethod},
 			{t("field_reasoning"), m.formData.ModelReasoningEffort},
+			{t("field_speed"), codexSpeedLabel(m.formData.ServiceTier)},
 		}
 	} else {
 		// 设置默认值
@@ -378,46 +352,10 @@ func (m model) editConfigView(serviceType string) string {
 			displayValue = displayValue + " " + t("hint_editing")
 		}
 
-		// 对于Wire API字段，显示选择选项
-		if serviceType == "Codex" && i == FieldWireAPI { // Wire API字段
-			if m.formField == i {
-				displayValue = field.value + " " + t("hint_select")
-			} else {
-				displayValue = field.value
-			}
-		}
-
-		// 对于认证方式字段，显示选择选项
-		if serviceType == "Codex" && i == FieldAuthMethod {
-			if m.formField == i {
-				displayValue = field.value + " " + t("hint_select")
-			} else {
-				displayValue = field.value
-			}
-		}
-
-		// 对于推理强度字段，显示选择选项
-		if serviceType == "Codex" && i == FieldModelReasoningEffort { // 推理强度字段
-			if m.formField == i {
-				displayValue = field.value + " " + t("hint_select")
-			} else {
-				displayValue = field.value
-			}
-		}
-		// 对于Claude推理强度字段，显示选择选项
-		if serviceType != "Codex" && i == 3 {
-			if m.formField == i {
-				displayValue = field.value + " " + t("hint_select")
-			} else {
-				displayValue = field.value
-			}
-		}
-
 		highlight := ""
 		if m.formField == i {
-			if serviceType == "Codex" && (i == FieldWireAPI || i == FieldAuthMethod || i == FieldModelReasoningEffort) { // Wire API、认证方式和推理强度字段
-				highlight = fieldHighlightStyle.Render(" " + t("hint_use_arrows"))
-			} else if serviceType != "Codex" && i == 3 {
+			if isSelectField(serviceType, i) {
+				displayValue += " " + t("hint_select")
 				highlight = fieldHighlightStyle.Render(" " + t("hint_use_arrows"))
 			} else {
 				highlight = fieldHighlightStyle.Render(" " + t("hint_input"))

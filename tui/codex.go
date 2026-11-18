@@ -5,10 +5,39 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 )
+
+var codexSpeedTiers = []string{"", "default", "priority", "ultrafast"}
+
+func codexSpeedLabel(tier string) string {
+	switch tier {
+	case "":
+		return t("speed_keep")
+	case "default":
+		return "Standard"
+	case "priority", "fast":
+		return "Fast"
+	case "ultrafast":
+		return "Ultrafast"
+	default:
+		return tier
+	}
+}
+
+func cycleCodexSpeed(tier string, step int) string {
+	if tier == "fast" {
+		tier = "priority"
+	}
+	index := slices.Index(codexSpeedTiers, tier)
+	if index < 0 {
+		return ""
+	}
+	return codexSpeedTiers[(index+step+len(codexSpeedTiers))%len(codexSpeedTiers)]
+}
 
 func (m model) codexListView() string {
 	header := headerView(t("header_codex"))

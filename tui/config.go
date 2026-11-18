@@ -11,7 +11,7 @@ import (
 
 // Default model constants
 const (
-	DefaultCodexModel  = "gpt-6.1-sol"
+	DefaultCodexModel  = "gpt-6.2-sol"
 	DefaultClaudeModel = "claude-sonnet-4-5-20250929"
 	DefaultDroidModel  = "gpt-5.4"
 )
@@ -70,6 +70,7 @@ type ServiceConfig struct {
 	AuthMethod               string `json:"auth_method,omitempty"`
 	EnvKey                   string `json:"env_key,omitempty"`
 	ModelReasoningEffort     string `json:"model_reasoning_effort,omitempty"`
+	ServiceTier              string `json:"service_tier,omitempty"`
 	ClaudeDefaultModel       string `json:"claude_default_model,omitempty"`
 	ClaudeDefaultHaikuModel  string `json:"claude_default_haiku_model,omitempty"`
 	ClaudeDefaultOpusModel   string `json:"claude_default_opus_model,omitempty"`
@@ -227,9 +228,15 @@ func (c *Config) importExistingConfigs() {
 			// Simple parsing to extract provider info from config.toml
 			baseURL := "https://api.openai.com/v1" // default
 			providerName := "openai"
+			model := DefaultCodexModel
+			var serviceTier string
 
 			if configData, err := os.ReadFile(codexConfigPath); err == nil {
 				content := string(configData)
+				if value, ok := readTomlKey(content, "model"); ok && value != "" {
+					model = value
+				}
+				serviceTier, _ = readTomlKey(content, "service_tier")
 				// Extract base_url from config
 				if idx := strings.Index(content, "base_url = "); idx != -1 {
 					start := idx + 13
@@ -247,10 +254,12 @@ func (c *Config) importExistingConfigs() {
 			}
 
 			codexConfig := ServiceConfig{
-				Name:     "Current Codex",
-				Provider: providerName,
-				BaseURL:  baseURL,
-				APIKey:   auth.OPENAI_API_KEY,
+				Name:        "Current Codex",
+				Provider:    providerName,
+				BaseURL:     baseURL,
+				APIKey:      auth.OPENAI_API_KEY,
+				Model:       model,
+				ServiceTier: serviceTier,
 			}
 			c.Codex = append(c.Codex, codexConfig)
 			c.Active.Codex = 0
@@ -630,11 +639,7 @@ func (c *Config) SwitchCodex(config *ServiceConfig) error {
 	// Resolve values with fallbacks
 	model := config.Model
 	if model == "" {
-		if v, ok := readTomlKey(content, "model"); ok && v != "" {
-			model = v
-		} else {
-			model = DefaultCodexModel
-		}
+		model = DefaultCodexModel
 	}
 	modelReasoningEffort := config.ModelReasoningEffort
 	if modelReasoningEffort == "" {
@@ -665,6 +670,9 @@ func (c *Config) SwitchCodex(config *ServiceConfig) error {
 	content = updateTomlKey(content, "model_provider", fmt.Sprintf(`"%s"`, escapeTomlString(providerName)))
 	content = updateTomlKey(content, "model", fmt.Sprintf(`"%s"`, escapeTomlString(model)))
 	content = updateTomlKey(content, "model_reasoning_effort", fmt.Sprintf(`"%s"`, escapeTomlString(modelReasoningEffort)))
+	if config.ServiceTier != "" {
+		content = updateTomlKey(content, "service_tier", fmt.Sprintf(`"%s"`, escapeTomlString(config.ServiceTier)))
+	}
 
 	// Update or add the provider section
 	sectionBody := fmt.Sprintf(`name = "%s"
@@ -696,21 +704,32 @@ wire_api = "%s"`, escapeTomlString(providerName), escapeTomlString(config.BaseUR
 func readTomlKey(content, key string) (string, bool) {
 	for _, line := range strings.Split(content, "\n") {
 		trimmed := strings.TrimSpace(line)
-		if strings.HasPrefix(trimmed, "#") {
-			continue
-		}
 		if strings.HasPrefix(trimmed, "[") {
 			break
 		}
-		if strings.HasPrefix(trimmed, key) {
-			afterKey := strings.TrimSpace(trimmed[len(key):])
-			if strings.HasPrefix(afterKey, "=") {
-				val := strings.TrimSpace(afterKey[1:])
-				// Strip inline comment
-				if ci := strings.Index(val, " #"); ci != -1 {
-					val = strings.TrimSpace(val[:ci])
-				}
-				return strings.Trim(val, `"`), true
+		value, ok := tomlKeyValue(trimmed, key)
+		if !ok {
+			continue
+		}
+		if literal, ok := strings.CutPrefix(value, "'"); ok {
+			text, _, found := strings.Cut(literal, "'")
+			return text, found
+		}
+		quoted, err := strconv.QuotedPrefix(value)
+		if err != nil || !strings.HasPrefix(quoted, `"`) {
+			return "", false
+		}
+		text, err := strconv.Unquote(quoted)
+		return text, err == nil
+	}
+	return "", false
+}
+
+func tomlKeyValue(line, key string) (string, bool) {
+	for _, spelling := range []string{key, `"` + key + `"`, "'" + key + "'"} {
+		if suffix, ok := strings.CutPrefix(line, spelling); ok {
+			if value, ok := strings.CutPrefix(strings.TrimSpace(suffix), "="); ok {
+				return strings.TrimSpace(value), true
 			}
 		}
 	}
@@ -720,42 +739,22 @@ func readTomlKey(content, key string) (string, bool) {
 // updateTomlKey replaces or adds a top-level key in TOML content.
 func updateTomlKey(content, key, value string) string {
 	lines := strings.Split(content, "\n")
-	found := false
-	for i, line := range lines {
-		trimmed := strings.TrimSpace(line)
-		if strings.HasPrefix(trimmed, "#") {
-			continue
-		}
-		if strings.HasPrefix(trimmed, "[") {
-			break
-		}
-		if strings.HasPrefix(trimmed, key) {
-			afterKey := strings.TrimSpace(trimmed[len(key):])
-			if strings.HasPrefix(afterKey, "=") {
-				lines[i] = key + " = " + value
-				found = true
-				break
-			}
-		}
-	}
-	if found {
-		return strings.Join(lines, "\n")
-	}
-	// Insert before first section header
+	assignment := key + " = " + value
 	insertIdx := len(lines)
 	for i, line := range lines {
 		trimmed := strings.TrimSpace(line)
-		if strings.HasPrefix(trimmed, "#") {
-			continue
-		}
 		if strings.HasPrefix(trimmed, "[") {
 			insertIdx = i
 			break
 		}
+		if _, ok := tomlKeyValue(trimmed, key); ok {
+			lines[i] = assignment
+			return strings.Join(lines, "\n")
+		}
 	}
 	result := make([]string, 0, len(lines)+1)
 	result = append(result, lines[:insertIdx]...)
-	result = append(result, key+" = "+value)
+	result = append(result, assignment)
 	result = append(result, lines[insertIdx:]...)
 	return strings.Join(result, "\n")
 }
